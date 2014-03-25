@@ -1,13 +1,9 @@
 package main;
 
 import java.awt.Button;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -36,6 +32,10 @@ public class Main extends JFrame implements ActionListener{
 		app.add(clerkInterface());	
 	}
 
+	
+	private static String CHECK_OUT_NAME = "Check Out Items";
+	private static String ADD_BORROWER_NAME = "Add Borrower";
+
 
 
 	private static JPanel clerkInterface(){
@@ -44,9 +44,13 @@ public class Main extends JFrame implements ActionListener{
 
 		panel.setLayout(layout);
 
-		Button addNewBorrower = new Button("Add Borrower");
+		Button addNewBorrower = new Button(ADD_BORROWER_NAME);
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
+		
+		Button checkOut = new Button(CHECK_OUT_NAME);
+		checkOut.addActionListener(app);
+		panel.add(checkOut);
 
 		return panel;
 	}
@@ -56,8 +60,11 @@ public class Main extends JFrame implements ActionListener{
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		if(e.getActionCommand() == "Add Borrower")
+		if(e.getActionCommand() == ADD_BORROWER_NAME)
 			addBorrower();
+		
+		if(e.getActionCommand() == CHECK_OUT_NAME)
+			checkOut();
 	}
 
 	private void addBorrower() {
@@ -86,7 +93,21 @@ public class Main extends JFrame implements ActionListener{
 		expiryDate = properties[7];
 		type = properties[8];
 		
+		//TODO: verify properties are valid
 		//TODO: add borrower with given properties
+	}
+	
+	private void checkOut() {
+		// Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+		String bid;
+		String password;
+		String name;
+		String address;
+		String phone;
+		String emailAddress;
+		String sinOrStNo;
+		String expiryDate;
+		String type;
 	}
 
 
