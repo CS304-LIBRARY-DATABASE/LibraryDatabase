@@ -34,10 +34,8 @@ public class Main extends JFrame implements ActionListener{
 	}
 
 	public static void init() {
-		// Specify where will it appear on the screen:
 		app.setLocation(100, 100);
 
-		// Show it!
 		app.setVisible
 		(true);
 
@@ -50,7 +48,7 @@ public class Main extends JFrame implements ActionListener{
 		app.add(librarianInterface(), BorderLayout.EAST);
 		app.add(generalInterface(), BorderLayout.SOUTH);
 
-		
+
 
 
 		app.setSize(700, 600);
@@ -128,11 +126,11 @@ public class Main extends JFrame implements ActionListener{
 
 		return panel;
 	}
-	
+
 	private static final String ADD_BOOK_NAME = "Add Book";
 	private static final String CHECKOUT_REPORT_NAME = "Checkout Report";
 	private static final String POPULAR_BOOK_NAME = "Popular Book Report";
- 
+
 
 	private static JPanel librarianInterface(){
 		JPanel panel = new JPanel();
@@ -148,11 +146,11 @@ public class Main extends JFrame implements ActionListener{
 		Button addBook = new Button(ADD_BOOK_NAME);
 		addBook.addActionListener(app);
 		panel.add(addBook);
-		
+
 		Button checkoutReport = new Button(CHECKOUT_REPORT_NAME);
 		checkoutReport.addActionListener(app);
 		panel.add(checkoutReport);
-		
+
 		Button popularBooks = new Button(POPULAR_BOOK_NAME);
 		popularBooks.addActionListener(app);
 		panel.add(popularBooks);
@@ -209,16 +207,16 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == PAY_FINE_NAME)
 			payFine();
-		
+
 		if(e.getActionCommand() == ADD_BOOK_NAME)
 			addBook();
-		
+
 		if(e.getActionCommand() == CHECKOUT_REPORT_NAME)
 			checkoutReport();
-		
+
 		if(e.getActionCommand() == POPULAR_BOOK_NAME)
 			popularBooks();
-		
+
 	}
 
 	/* 
@@ -281,7 +279,7 @@ public class Main extends JFrame implements ActionListener{
 			String numItems = JOptionPane.showInputDialog("How many items are being checked out?");
 
 			if(numItems == null)
-				break;
+				return;
 
 			try{
 				n = Integer.valueOf(numItems);
@@ -305,30 +303,28 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 
-		if(n > 0){
-			String[] properties = new String[1 + n];
-			properties[0] = "Borrower ID";
+		String[] properties = new String[1 + n];
+		properties[0] = "Borrower ID";
 
-			for(int i = 1; i <= n; i++)
-				properties[i] = "Callnumber #" + String.valueOf(i);
+		for(int i = 1; i <= n; i++)
+			properties[i] = "Callnumber #" + String.valueOf(i);
 
-			properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
+		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
 
-			borid = new String[n];
-			bid =  properties[0];
-			callNumber = new String[n];
-			copyNo = new String[n];
-			//outDate = ;
-			//inDate = ;
+		borid = new String[n];
+		bid =  properties[0];
+		callNumber = new String[n];
+		copyNo = new String[n];
+		//outDate = ;
+		//inDate = ;
 
-			//TODO: verify correct input
-			//TODO: get remaining tuple values
-			//TODO: add to database
-			//TODO: output result
-
-		}
+		//TODO: verify correct input
+		//TODO: get remaining tuple values
+		//TODO: add to database
+		//TODO: output result
 
 	}
+
 
 	/*
 	 * Processes a return. When an item is returned, the clerk records the
@@ -400,14 +396,14 @@ public class Main extends JFrame implements ActionListener{
 		// TODO Everything
 
 	}
-	
+
 	/*
 	 * Adds a new book or new copy of an existing book to the library. The librarian provides the
 	 * information for the new book, and the system adds it to the library.
 	 */
 	private void addBook() {
 		// TODO everything
-		
+
 	}
 
 	/*
@@ -418,7 +414,7 @@ public class Main extends JFrame implements ActionListener{
 	 */
 	private void checkoutReport() {
 		// TODO everything
-		
+
 	}
 
 	/*
@@ -427,8 +423,44 @@ public class Main extends JFrame implements ActionListener{
 	 * The books are ordered by the number of times they were borrowed.
 	 */
 	private void popularBooks() {
-		// TODO everything
+		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
+		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+		int year;
+		int n;
+
+
+		while(true){
+			String[] response = {"Year", "# of Results"};
+			response = createInputPopup(response, "Find popular items");
+
+			if(response == null)
+				return;
+			
+			try{
+				year = Integer.valueOf(response[0]);
+				
+				if(year < 0){
+					JOptionPane.showMessageDialog(null, "Please enter a positive year.", "Invalid input", JOptionPane.ERROR_MESSAGE);
+					continue;
+				}
+				
+				n = Integer.valueOf(response[1]);
+				
+				if(n < 0){
+					JOptionPane.showMessageDialog(null, "Please enter a positive value for results.", "Invalid input", JOptionPane.ERROR_MESSAGE);
+					continue;
+				}
+				
+				break;
+			}
+			catch (Exception e){
+				JOptionPane.showMessageDialog(null, "Please enter numerical values.", "Invalid input", JOptionPane.ERROR_MESSAGE);
+			}
+		}
 		
+		//TODO: query for top books
+		//TODO: display top books
+
 	}
 
 
@@ -458,9 +490,12 @@ public class Main extends JFrame implements ActionListener{
 
 		final JOptionPane window = new JOptionPane();
 
-		window.showOptionDialog(null, message, title, JOptionPane.OK_CANCEL_OPTION,
-				JOptionPane.QUESTION_MESSAGE, null, null, null); 
+		int result = window.showOptionDialog(null, message, title, JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, null, null);
 
+		if(result != 0)
+			return null;
+		
 		String[] input = new String[n];
 
 		for(int i = 0; i <= n - 1; i++){
