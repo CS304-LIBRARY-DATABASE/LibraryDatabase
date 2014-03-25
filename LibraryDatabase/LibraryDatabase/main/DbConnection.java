@@ -25,7 +25,7 @@ public class DbConnection implements ActionListener {
 
 		
 	private static DbConnection dbc = null;
-	private Connection con;
+	private static Connection con;
 	
 	// user is allowed 3 login attempts
     private int loginAttempts = 0;
@@ -183,4 +183,9 @@ public class DbConnection implements ActionListener {
 				  }
 				}    
 	    }
+
+	    
+		public static Connection getJDBCConnection() {
+			return con;
+		}
 }
