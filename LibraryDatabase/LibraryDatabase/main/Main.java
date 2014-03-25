@@ -37,6 +37,7 @@ public class Main extends JFrame implements ActionListener{
 
 	public static void init() {
 		app.setLocation(100, 100);
+		app.setSize(700, 310);
 
 		app.setVisible
 		(true);
@@ -63,7 +64,7 @@ public class Main extends JFrame implements ActionListener{
 					System.exit(0);
 				}
 				 */
-				
+
 				System.exit(0);
 
 			}
@@ -427,8 +428,34 @@ public class Main extends JFrame implements ActionListener{
 	 * list of books that match the search together with the number of copies that are in and out.
 	 */
 	private void search() {
-		// TODO everything
+		//Book (callNumber, isbn, title, mainAuthor, publisher, year )
+		//HasAuthor (callNumber, name)
+		//HasSubject (callNumber, subject)
+		//BookCopy (callNumber, copyNo, status)
 
+		String title;
+		String author;
+		String subject;
+
+		while(true){
+			String[] searchKey = {"Title", "Author", "Subject"};
+			searchKey = createInputPopup(searchKey, "Search keys");
+
+			if(searchKey == null)
+				return;
+
+			title = searchKey[0];
+			author = searchKey[1];
+			subject = searchKey[2];
+			
+			if(title.isEmpty() && author.isEmpty() && subject.isEmpty())
+				JOptionPane.showMessageDialog(null, "Please enter a search key", "No input", JOptionPane.ERROR_MESSAGE);
+			else
+				break;
+		}
+		
+		//TODO: search/filter for relevant books
+		//TODO: display books
 	}
 
 	/*
@@ -439,18 +466,18 @@ public class Main extends JFrame implements ActionListener{
 		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
 
 		String bid;
-		
+
 		String[] getInfo = {"Borrower ID"};
 		getInfo = createInputPopup(getInfo, "Validation");
-		
+
 		//TODO: check that Borrower ID is good
 		//TODO: query for borrowed tuples
 		//TODO: query for fines
 		//TODO: query for hold requests
 		//TODO: display
 
-		
-		
+
+
 	}
 
 	/*
@@ -458,8 +485,11 @@ public class Main extends JFrame implements ActionListener{
 	 * to the borrower and informs the library clerk to keep the book out of the shelves.
 	 */
 	private void holdRequest() {
-		// TODO everything
-
+		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
+		//HoldRequest(hid, bid, callNumber, issuedDate)
+		//BookCopy (callNumber, copyNo, status)
+		//TODO:Everything
+		
 	}
 
 	/*
@@ -501,56 +531,56 @@ public class Main extends JFrame implements ActionListener{
 		mainAuthor = properties[3];
 		publisher = properties[4];
 		year = properties[5];
-		
+
 		//TODO: verify correct input
-		
-		
+
+
 		boolean addAuthor;
 		int result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
 				"Additional Author", JOptionPane.YES_NO_OPTION,
 				JOptionPane.QUESTION_MESSAGE, null, null, null);
-		
+
 		addAuthor = (result == 0);
-		
+
 		while(addAuthor){
 			String[] author = {"Name"};
 			author = createInputPopup(author, "Add author to " + title);
-			
+
 			//TODO: add author to database
-			
+
 			result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
 					"Additional Author", JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE, null, null, null);
-			
+
 			//TODO: handle cancel/close, verify author name isn't empty
-			
+
 			addAuthor = (result == 0);
 
 		}
-		
+
 		boolean addSubject;
-	    result = JOptionPane.showOptionDialog(null, "Would you like to a subject?",
+		result = JOptionPane.showOptionDialog(null, "Would you like to a subject?",
 				"Additional Author", JOptionPane.YES_NO_OPTION,
 				JOptionPane.QUESTION_MESSAGE, null, null, null);
-		
+
 		addSubject = (result == 0);
-		
+
 		while(addSubject){
 			String[] author = {"Name"};
 			author = createInputPopup(author, "Add subject to " + title);
-			
+
 			//TODO: add subject to database
-			
+
 			result = JOptionPane.showOptionDialog(null, "Would you like to add another subject?",
 					"Additional Author", JOptionPane.YES_NO_OPTION,
 					JOptionPane.QUESTION_MESSAGE, null, null, null);
-			
+
 			//TODO: handle cancel/close, verify subject name isn't empty
-			
+
 			addSubject = (result == 0);
 
 		}
-			
+
 
 	}
 
