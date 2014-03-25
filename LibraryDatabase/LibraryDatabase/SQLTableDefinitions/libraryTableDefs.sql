@@ -1,12 +1,17 @@
-drop table Borrower;
-drop table BorrowerType;
-drop table Book;
+drop table Borrower CASCADE CONSTRAINTS;
+drop table BorrowerType CASCADE CONSTRAINTS;
+drop table Book CASCADE CONSTRAINTS;
 drop table HasAuthor;
 drop table HasSubject;
-drop table BookCopy;
+drop table BookCopy CASCADE CONSTRAINTS;
 drop table HoldRequest;
-drop table Borrowing;
+drop table Borrowing CASCADE CONSTRAINTS;
 drop table Fine;
+
+create table BorrowerType
+   (type varchar(20) not null,
+   bookTimeLimit varchar(20) not null,
+   primary key (type));
 
 create table Borrower 
    (bid char(11) not null,
@@ -20,12 +25,7 @@ create table Borrower
    type varchar(20) not null,
    primary key (bid),
    foreign key (type) references BorrowerType(type) ON DELETE CASCADE);
-                       
-create table BorrowerType
-   (type varchar(20) not null,
-   bookTimeLimit varchar(20) not null,
-   primary key (type));
-
+   
 create table Book 
    (callNumber char(20) not null primary key,
    isbn  varchar(13) null,
@@ -35,11 +35,13 @@ create table Book
    year int);
 
 create table HasAuthor
-   (callNumber char(20) not null primary key foreign key references Book(callNumber) ON DELETE CASCADE,
-   name varchar(40) not null);
+   (callNumber char(20) not null,
+   name varchar(40) not null,
+   primary key (callNumber),
+   foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
 create table HasSubject
-   (callNumber char(20) not null primary key foreign key references Book(callNumber) ON DELETE CASCADE,
+   (callNumber char(20) not null,
    subject varchar(40) not null);
 
 create table BookCopy
@@ -47,21 +49,24 @@ create table BookCopy
    copyNo char(20) not null,
    status varchar(7) null,
    primary key(callNumber, copyNo),
-   foreign key references Book(callNumber) ON DELETE CASCADE);
+   foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
 create table HoldRequest
    (hid char(20) not null primary key,
-   bid char(11) not null foreign key references Borrower(bid) ON DELETE CASCADE,
-   callNumber char(20) not null foreign key references Book(callNumber) ON DELETE CASCADE,
-   issuedDate date);
+   bid char(11) not null,
+   callNumber char(20) not null,
+   issuedDate date,
+   foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
+   foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
                          
 create table Borrowing
    (borid char(20) not null primary key,
-   bid char(11) not null foreign key references Borrower(bid) ON DELETE CASCADE,
+   bid char(11) not null,
    callNumber char(20) not null,
    copyNo char(20) not null,
    outDate date null,
    inDate date null,
+   foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber, copyNo) references BookCopy(callNumber, copyNo) ON DELETE CASCADE);
                        
 create table Fine
@@ -69,5 +74,6 @@ create table Fine
    amount float,
    issuedDate date,
    paidDate date,
-   borid char(20) not null foreign key references Borrowing(borid) ON DELETE CASCADE);
+   borid char(20) not null,
+   foreign key (borid) references Borrowing(borid) ON DELETE CASCADE);
 

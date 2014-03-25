@@ -97,38 +97,28 @@ public class Transaction {
 	 * @return
 	 */
 	public String listBorrowers() {
-		String     bid;
-		String     bname;
-		String     baddr;
-		String     bcity;
-		String     bphone;
 		Statement  stmt;
 		ResultSet  rs;
-		String result = "";
+		String result = "| bid | PW | Name | Address | Phone | Email | Sin/StNo | ExpDate | Type |\n";
 		   
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  stmt = con.createStatement();
 
 		  rs = executeQuery("SELECT * FROM Borrower");
-
-		  // get info on ResultSet
-		  ResultSetMetaData rsmd = rs.getMetaData();
-
-		  // get number of columns
-		  int numCols = rsmd.getColumnCount();
-
-		  // display column names;
-		  for (int i = 0; i < numCols; i++) {
-		      // get column name and print it
-			  System.out.printf("%-15s", rsmd.getColumnName(i+1));    
-		  }
-
 		  
 		  int i = 0;
 		  while(rs.next()) {
 			  i++;
-		      result += rs.getNString(1);
+			  result += "| ";
+		      result += rs.getNString(1) + " | ";
+		      result += rs.getNString(2) + " | ";
+		      result += rs.getNString(3) + " | ";
+		      result += rs.getNString(4) + " | ";
+		      result += rs.getInt(5) + " | ";
+		      result += rs.getNString(6) + " | ";
+		      result += rs.getDate(7) + " | ";
+		      result += rs.getNString(8) + " |\n";
 		  }
 	 
 		  // close the statement; 
