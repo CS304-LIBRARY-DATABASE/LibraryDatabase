@@ -11,6 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
@@ -46,6 +47,8 @@ public class Main extends JFrame implements ActionListener{
 		
 		app.add(generalInterface(), BorderLayout.SOUTH);
 		app.add(clerkInterface(), BorderLayout.WEST);
+		app.add(borrowerInterface(), BorderLayout.CENTER);
+
 		
 		app.setSize(700, 600);
 		app.repaint();
@@ -88,6 +91,27 @@ public class Main extends JFrame implements ActionListener{
 		return panel;
 	}
 	
+	private static final String SEARCH_NAME = "Search";
+	
+	private static JPanel borrowerInterface(){
+		JPanel panel = new JPanel();
+		
+		TitledBorder title;
+		title = BorderFactory.createTitledBorder("Borrower Options");
+		panel.setBorder(title);
+		
+		BoxLayout layout = new BoxLayout(panel, BoxLayout.PAGE_AXIS);
+
+		panel.setLayout(layout);
+
+		Button search = new Button(SEARCH_NAME);
+		search.addActionListener(app);
+		panel.add(search);
+
+
+		return panel;
+	}
+	
 	private static JPanel generalInterface(){
 		JPanel panel = new JPanel();
 		
@@ -96,13 +120,15 @@ public class Main extends JFrame implements ActionListener{
 		panel.setBorder(title);
 		
 		JTextArea box = new JTextArea();
+		JScrollPane scroll = new JScrollPane(box);
 		
 		box.setSize(100, 300);
-		box.setColumns(50);
+		box.setColumns(60);
 		box.setRows(16);
+		box.setAutoscrolls(true);
 		box.setEditable(false);
-		
-		panel.add(box);
+				
+		panel.add(scroll);
 		
 		return panel;		
 	}
@@ -123,7 +149,11 @@ public class Main extends JFrame implements ActionListener{
 		
 		if(e.getActionCommand() == CHECK_OVERDUE_NAME)
 			checkOverdue();
+		
+		if(e.getActionCommand() == SEARCH_NAME)
+			search();
 	}
+
 
 	/* 
 	 * Add a new borrower to the library. The user should provide all the required information
@@ -262,7 +292,16 @@ public class Main extends JFrame implements ActionListener{
 	 * to any of them (or to all of them).
 	 */
 	private void checkOverdue() {
-		// TODO Auto-generated method stub
+		// TODO everything
+		
+	}
+	
+	/*
+	 * Search for books using keyword search on titles, authors and subjects. The result is a 
+	 * list of books that match the search together with the number of copies that are in and out.
+	 */
+	private void search() {
+		// TODO everything
 		
 	}
 
