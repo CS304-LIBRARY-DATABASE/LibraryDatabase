@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -48,7 +50,33 @@ public class Main extends JFrame implements ActionListener{
 		app.add(librarianInterface(), BorderLayout.EAST);
 		app.add(generalInterface(), BorderLayout.SOUTH);
 
+		WindowListener exitListener = new WindowListener() {
 
+			@Override
+			public void windowClosing(WindowEvent e) {
+				/*
+				  int confirm = JOptionPane.showOptionDialog(null,
+						"Are you sure you want to close the application?",
+						"Exit Confirmation", JOptionPane.YES_NO_OPTION,
+						JOptionPane.QUESTION_MESSAGE, null, null, null);
+				if (confirm == JOptionPane.YES_OPTION) {
+					System.exit(0);
+				}
+				 */
+				
+				System.exit(0);
+
+			}
+
+			public void windowDeactivated(WindowEvent arg0) {}
+			public void windowDeiconified(WindowEvent arg0) {}
+			public void windowIconified(WindowEvent arg0) {}
+			public void windowOpened(WindowEvent arg0) {}
+			public void windowActivated(WindowEvent arg0) {}
+			public void windowClosed(WindowEvent arg0) {}
+		};
+
+		app.addWindowListener(exitListener);
 
 
 		app.setSize(700, 600);
@@ -237,11 +265,11 @@ public class Main extends JFrame implements ActionListener{
 		String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
 
 		while (true) {
-			properties = createInputPopup(properties, "Add New Borrower");
+			properties = createInputPopup(properties, "Add new borrower");
 			if (properties == null) {
 				break;
 			}
-	
+
 			bid = properties[0];
 			password = properties[1];
 			name = properties[2];
@@ -251,7 +279,7 @@ public class Main extends JFrame implements ActionListener{
 			sinOrStNo = properties[6];
 			expiryDate = properties[7];
 			type = properties[8];
-			
+
 			if (!VerifyAttributes.notEmpty(bid)) {
 				makeErrorAlert("ID cannot be empty");
 			} else if (!VerifyAttributes.verifyPassword(password)) {
@@ -276,8 +304,8 @@ public class Main extends JFrame implements ActionListener{
 		}
 		//TODO: add borrower with given properties
 	}
-	
-	
+
+
 	/**
 	 * Make a popup window with an error message
 	 * @param message
@@ -285,8 +313,8 @@ public class Main extends JFrame implements ActionListener{
 	private void makeErrorAlert(String message) {
 		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
-	
-	
+
+
 
 	/*
 	Check-out items borrowed by a borrower. To borrow items, borrowers provide their card
@@ -408,8 +436,21 @@ public class Main extends JFrame implements ActionListener{
 	 * not yet returned, any outstanding fines and the hold requests that have been placed by the borrower.
 	 */
 	private void checkAccount() {
-		// TODO everything
+		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
 
+		String bid;
+		
+		String[] getInfo = {"Borrower ID"};
+		getInfo = createInputPopup(getInfo, "Validation");
+		
+		//TODO: check that Borrower ID is good
+		//TODO: query for borrowed tuples
+		//TODO: query for fines
+		//TODO: query for hold requests
+		//TODO: display
+
+		
+		
 	}
 
 	/*
@@ -434,7 +475,82 @@ public class Main extends JFrame implements ActionListener{
 	 * information for the new book, and the system adds it to the library.
 	 */
 	private void addBook() {
-		// TODO everything
+		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
+		//BookCopy (callNumber, copyNo, status)
+		//HasAuthor (callNumber, name)
+		//HasSubject (callNumber, subject)
+
+		String callNumber;
+		String isbn;
+		String title;
+		String mainAuthor;
+		String publisher;
+		String year;
+
+		String[] properties = {"Call #", "ISBN", "Title", "Main Author", "Publisher", "Year"};
+
+		properties = createInputPopup(properties, "Add new book");
+
+		if (properties == null) {
+			return;
+		}
+
+		callNumber = properties[0];
+		isbn = properties[1];
+		title = properties[2];
+		mainAuthor = properties[3];
+		publisher = properties[4];
+		year = properties[5];
+		
+		//TODO: verify correct input
+		
+		
+		boolean addAuthor;
+		int result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
+				"Additional Author", JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, null, null);
+		
+		addAuthor = (result == 0);
+		
+		while(addAuthor){
+			String[] author = {"Name"};
+			author = createInputPopup(author, "Add author to " + title);
+			
+			//TODO: add author to database
+			
+			result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
+					"Additional Author", JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null, null, null);
+			
+			//TODO: handle cancel/close, verify author name isn't empty
+			
+			addAuthor = (result == 0);
+
+		}
+		
+		boolean addSubject;
+	    result = JOptionPane.showOptionDialog(null, "Would you like to a subject?",
+				"Additional Author", JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, null, null);
+		
+		addSubject = (result == 0);
+		
+		while(addSubject){
+			String[] author = {"Name"};
+			author = createInputPopup(author, "Add subject to " + title);
+			
+			//TODO: add subject to database
+			
+			result = JOptionPane.showOptionDialog(null, "Would you like to add another subject?",
+					"Additional Author", JOptionPane.YES_NO_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null, null, null);
+			
+			//TODO: handle cancel/close, verify subject name isn't empty
+			
+			addSubject = (result == 0);
+
+		}
+			
 
 	}
 
@@ -467,29 +583,29 @@ public class Main extends JFrame implements ActionListener{
 
 			if(response == null)
 				return;
-			
+
 			try{
 				year = Integer.valueOf(response[0]);
-				
+
 				if(year < 0){
 					JOptionPane.showMessageDialog(null, "Please enter a positive year.", "Invalid input", JOptionPane.ERROR_MESSAGE);
 					continue;
 				}
-				
+
 				n = Integer.valueOf(response[1]);
-				
+
 				if(n < 0){
 					JOptionPane.showMessageDialog(null, "Please enter a positive value for results.", "Invalid input", JOptionPane.ERROR_MESSAGE);
 					continue;
 				}
-				
+
 				break;
 			}
 			catch (Exception e){
 				JOptionPane.showMessageDialog(null, "Please enter numerical values.", "Invalid input", JOptionPane.ERROR_MESSAGE);
 			}
 		}
-		
+
 		//TODO: query for top books
 		//TODO: display top books
 
@@ -527,7 +643,7 @@ public class Main extends JFrame implements ActionListener{
 
 		if(result != 0)
 			return null;
-		
+
 		String[] input = new String[n];
 
 		for(int i = 0; i <= n - 1; i++){
