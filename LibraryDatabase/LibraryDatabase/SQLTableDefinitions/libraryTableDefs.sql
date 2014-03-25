@@ -12,13 +12,23 @@ create table BorrowerType
    (type varchar(20) not null,
    bookTimeLimit varchar(20) not null,
    primary key (type));
+   
+insert into BorrowerType
+values('borrower', '2');
+insert into BorrowerType
+values('faculty', '12');
+insert into BorrowerType
+values('staff', '6');
+insert into BorrowerType
+values('public', '2');
+ 
 
 create table Borrower 
    (bid char(11) not null,
    password char(16) not null, 
    name char(11) not null,
    address varchar(40) null,
-   phone int null,
+   phone varchar(15) null,
    emailAddress varchar(40) null,
    sinOrStNo char(9) not null,
    expiryDate date not null,

@@ -10,7 +10,13 @@ public class VerifyAttributes {
 		"^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
 		+ "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
 	
-	private static Pattern pattern = Pattern.compile(EMAIL_PATTERN);
+	private static Pattern emailPattern = Pattern.compile(EMAIL_PATTERN);
+	
+	private static final String PHONE_PATTERN = 
+			"^(\\d(-| )?)?\\d{3}(-| )?\\d{3}(-| )?\\d{4}$";
+		
+	private static Pattern phonePattern = Pattern.compile(PHONE_PATTERN);
+	
 	
 	/**
 	 * Check an email for validity
@@ -19,7 +25,7 @@ public class VerifyAttributes {
 	 */
 	public static boolean verifyEmail(String email) {
 		if (notEmpty(email)) {
-			Matcher matcher = pattern.matcher(email);
+			Matcher matcher = emailPattern.matcher(email);
 			return matcher.matches();
 		}
 		return  false;
@@ -27,13 +33,15 @@ public class VerifyAttributes {
 
 	
 	public static boolean verifyPhone(String phone) {
-		phone = phone.trim().replaceAll(" ", "").replaceAll("-", "");
-		return verifyInteger(phone);
+		if (notEmpty(phone)) {
+			Matcher matcher = phonePattern.matcher(phone);
+			return matcher.matches();
+		}
+		return  false;
 	}
 	
-	public static Integer parsePhoneNumber(String phone) {
-		phone = phone.trim().replaceAll(" ", "").replaceAll("-", "");
-		return Integer.parseInt(phone);
+	public static String parsePhoneNumber(String phone) {
+		return phone.trim().replaceAll(" ", "").replaceAll("-", "");
 	}
 	
 	public static boolean verifyPassword(String password) {
@@ -74,8 +82,9 @@ public class VerifyAttributes {
 		if (notEmpty(type)) {
 			type = type.toLowerCase();
 			return type.equals("borrower") ||
-				   type.equals("clerk") ||
-				   type.equals("librarian");
+				   type.equals("staff") ||
+				   type.equals("faculty") ||
+				   type.equals("public");
 		}
 		return false;
 	}

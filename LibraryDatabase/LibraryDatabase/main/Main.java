@@ -30,9 +30,9 @@ public class Main extends JFrame implements ActionListener{
 	{
 		// make a connection to the database
 		// if successful it will call init() below
-		//DbConnection dbc = DbConnection.getInstance();
+		DbConnection dbc = DbConnection.getInstance();
 
-		init();
+		//init();
 	}
 
 	public static void init() {
@@ -292,19 +292,19 @@ public class Main extends JFrame implements ActionListener{
 			} else if (!VerifyAttributes.verifyPhone(phone)) {
 				makeErrorAlert("Phone is invalid");
 			} else if (!VerifyAttributes.verifyEmail(emailAddress)) {
-				makeErrorAlert("Sin/Student Number cannot be null");
+				makeErrorAlert("Email address is invalid");
 			} else if (!VerifyAttributes.notEmpty(sinOrStNo)) {
 				makeErrorAlert("Sin/Student Number cannot be null");
 			} else if (!VerifyAttributes.verifyDate(expiryDate)) {
-				makeErrorAlert("Sin/Student Number cannot be null");
+				makeErrorAlert("Expiry date is invalid");
 			} else if (!VerifyAttributes.verifyType(type)) {
-				makeErrorAlert("Sin/Student Number cannot be null");
+				makeErrorAlert("Type is invalid");
 			} else {
+				// add borrower with given properties
+				TransactionManager.addBorrower(properties);
 				break;
 			}
 		}
-		//TODO: add borrower with given properties
-		int phoneNum = VerifyAttributes.parsePhoneNumber(phone);
 	}
 
 

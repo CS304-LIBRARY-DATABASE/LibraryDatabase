@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 
-public class Transaction {
+public class TransactionManager {
 	
 	/**
 	 * Execute Insert, Update, or Delete statements
@@ -20,7 +20,7 @@ public class Transaction {
 	 * @param con
 	 * @return
 	 */
-	private int executeUpdate(PreparedStatement  ps, Connection con) {
+	private static int executeUpdate(PreparedStatement  ps, Connection con) {
 		try {
 			int rowCount = ps.executeUpdate();
 			
@@ -45,7 +45,7 @@ public class Transaction {
 	}
 	
 	
-	private ResultSet executeQuery(String query) {
+	private static ResultSet executeQuery(String query) {
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  Statement stmt = con.createStatement();
@@ -62,24 +62,25 @@ public class Transaction {
 	 * Add a new borrower to Borrower Table
 	 * @param attributes
 	 */
-	public void addBorrower(String[] attributes) {
+	public static void addBorrower(String[] attributes) {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
-		ps = con.prepareStatement("INSERT INTO Borrower VALUES (?,?,?,?,?,?,?,?)");
+		ps = con.prepareStatement("INSERT INTO Borrower VALUES (?,?,?,?,?,?,?,?,?)");
 		
-		ps.setString(1, attributes[1]);
-		ps.setString(2, attributes[2]);
-		ps.setString(3, attributes[3]);
-		ps.setString(4, attributes[4]);
-		ps.setInt(5, VerifyAttributes.parsePhoneNumber(attributes[5]));
-		ps.setString(6, attributes[6]);
-		ps.setDate(7, VerifyAttributes.parseDate(attributes[7]));
-		ps.setString(8, attributes[8]);
+		ps.setString(1, attributes[0]);
+		ps.setString(2, attributes[1]);
+		ps.setString(3, attributes[2]);
+		ps.setString(4, attributes[3]);
+		ps.setString(5, VerifyAttributes.parsePhoneNumber(attributes[4]));
+		ps.setString(6, attributes[5]);
+		ps.setString(7, attributes[6]);
+		ps.setDate(8, VerifyAttributes.parseDate(attributes[7]));
+		ps.setString(9, attributes[8]);
 		
 	    
 		} catch (SQLException e) {
-			System.out.println("Message: " + e.getMessage());
+			System.out.println("addBorrower Error: " + e.getMessage());
 //		    try  {
 //				ps.cancel();	
 //		    }
@@ -96,7 +97,7 @@ public class Transaction {
 	 * Select all borrowers in Borrower table and return as String
 	 * @return
 	 */
-	public String listBorrowers() {
+	public static String listBorrowers() {
 		Statement  stmt;
 		ResultSet  rs;
 		String result = "| bid | PW | Name | Address | Phone | Email | Sin/StNo | ExpDate | Type |\n";
@@ -115,10 +116,11 @@ public class Transaction {
 		      result += rs.getNString(2) + " | ";
 		      result += rs.getNString(3) + " | ";
 		      result += rs.getNString(4) + " | ";
-		      result += rs.getInt(5) + " | ";
+		      result += rs.getString(5) + " | ";
 		      result += rs.getNString(6) + " | ";
-		      result += rs.getDate(7) + " | ";
-		      result += rs.getNString(8) + " |\n";
+		      result += rs.getNString(7) + " | ";
+		      result += rs.getDate(8) + " | ";
+		      result += rs.getNString(9) + " |\n";
 		  }
 	 
 		  // close the statement; 
