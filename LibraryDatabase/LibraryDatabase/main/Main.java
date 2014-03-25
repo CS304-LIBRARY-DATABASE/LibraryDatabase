@@ -183,8 +183,10 @@ public class Main extends JFrame implements ActionListener{
 		sinOrStNo = properties[6];
 		expiryDate = properties[7];
 		type = properties[8];
+		
+		
 
-		//TODO: verify properties are valid
+		//TODO: ERIC verify properties are valid
 		//TODO: add borrower with given properties
 	}
 
