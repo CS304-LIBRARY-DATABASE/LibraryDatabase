@@ -1,16 +1,20 @@
 package main;
 
+import java.awt.BorderLayout;
 import java.awt.Button;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.border.TitledBorder;
 
 
 @SuppressWarnings("serial")
@@ -23,31 +27,45 @@ public class Main extends JFrame implements ActionListener{
 	{
 		// make a connection to the database
 		// if successful it will call init() below
-		DbConnection dbc = DbConnection.getInstance();
+		//DbConnection dbc = DbConnection.getInstance();
+
+		init();
 	}
-	
+
 	public static void init() {
 		// Specify where will it appear on the screen:
 		app.setLocation(100, 100);
-		app.setSize(300, 300);
 
 		// Show it!
 		app.setVisible
 		(true);
 
-		app.add(clerkInterface());	
+		BorderLayout layout = new BorderLayout();
+
+		app.setLayout(layout);
+		
+		app.add(generalInterface(), BorderLayout.SOUTH);
+		app.add(clerkInterface(), BorderLayout.WEST);
+		
+		app.setSize(700, 600);
+		app.repaint();
 	}
 
 
 	private static final String CHECK_OUT_NAME = "Check Out Items";
 	private static final String ADD_BORROWER_NAME = "Add Borrower";
 	private static final String RETURN_ITEM_NAME = "Return Item";
-
+	private static final String CHECK_OVERDUE_NAME = "Check Overdue Items";
 
 
 	private static JPanel clerkInterface(){
 		JPanel panel = new JPanel();
-		FlowLayout layout = new FlowLayout();
+		
+		TitledBorder title;
+		title = BorderFactory.createTitledBorder("Clerk Options");
+		panel.setBorder(title);
+		
+		BoxLayout layout = new BoxLayout(panel, BoxLayout.PAGE_AXIS);
 
 		panel.setLayout(layout);
 
@@ -62,8 +80,31 @@ public class Main extends JFrame implements ActionListener{
 		Button returnItem = new Button(RETURN_ITEM_NAME);
 		returnItem.addActionListener(app);
 		panel.add(returnItem);
+		
+		Button checkOverdue = new Button(CHECK_OVERDUE_NAME);
+		checkOverdue.addActionListener(app);
+		panel.add(checkOverdue);
 
 		return panel;
+	}
+	
+	private static JPanel generalInterface(){
+		JPanel panel = new JPanel();
+		
+		TitledBorder title;
+		title = BorderFactory.createTitledBorder("Output");
+		panel.setBorder(title);
+		
+		JTextArea box = new JTextArea();
+		
+		box.setSize(100, 300);
+		box.setColumns(50);
+		box.setRows(16);
+		box.setEditable(false);
+		
+		panel.add(box);
+		
+		return panel;		
 	}
 
 
@@ -79,6 +120,9 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == RETURN_ITEM_NAME)
 			returnItem();
+		
+		if(e.getActionCommand() == CHECK_OVERDUE_NAME)
+			checkOverdue();
 	}
 
 	/* 
@@ -119,7 +163,7 @@ public class Main extends JFrame implements ActionListener{
 	number and a list with the call numbers of the items they want to check out. The system
 	determines if the borrower's account is valid and if the library items are available for
 	borrowing. Then it creates one or more borrowing records and prints a note with the
-	items and their due day (which is giver to the borrower).
+	items and their due day (which is given to the borrower).
 	 */
 	private void checkOut() {
 		// Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
@@ -161,28 +205,31 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 
-		String[] properties = new String[1 + n];
-		properties[0] = "Borrower ID";
+		if(n > 0){
+			String[] properties = new String[1 + n];
+			properties[0] = "Borrower ID";
 
-		for(int i = 1; i <= n; i++)
-			properties[i] = "Callnumber #" + String.valueOf(i);
+			for(int i = 1; i <= n; i++)
+				properties[i] = "Callnumber #" + String.valueOf(i);
 
-		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
+			properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
 
-		borid = new String[n];
-		bid =  properties[0];
-		callNumber = new String[n];
-		copyNo = new String[n];
-		//outDate = ;
-		//inDate = ;
+			borid = new String[n];
+			bid =  properties[0];
+			callNumber = new String[n];
+			copyNo = new String[n];
+			//outDate = ;
+			//inDate = ;
 
-		//TODO: verify correct input
-		//TODO: get remaining tuple values
-		//TODO: add to database
-		//TODO: output result
+			//TODO: verify correct input
+			//TODO: get remaining tuple values
+			//TODO: add to database
+			//TODO: output result
+
+		}
 
 	}
-	
+
 	/*
 	 * Processes a return. When an item is returned, the clerk records the
 	 * return by providing the item's catalogue number. The system determines
@@ -196,10 +243,26 @@ public class Main extends JFrame implements ActionListener{
 		//Fine (fid, amount, issuedDate, paidDate, borid)
 		//BookCopy (callNumber, copyNo, status)
 		//HoldRequest(hid, bid, callNumber, issuedDate)
-		
+		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+
+
 		String[] callNumber = {"Call Number"};
 		callNumber = createInputPopup(callNumber, "Return a book");
-		
+
+		// TODO: determine borrower
+		// TODO: check if borrower has outstanding fine, change afterwards
+		// TODO: check if there is hold request for book
+		// TODO: update all tuples
+
+	}
+	
+	/*
+	 * Checks overdue items. The system displays a list of the items that are overdue and
+	 * the borrowers who have checked them out. The clerk may decide to send an email messages
+	 * to any of them (or to all of them).
+	 */
+	private void checkOverdue() {
+		// TODO Auto-generated method stub
 		
 	}
 
