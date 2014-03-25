@@ -236,25 +236,57 @@ public class Main extends JFrame implements ActionListener{
 
 		String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
 
-		properties = createInputPopup(properties, "Add New Borrower");
-
-		bid = properties[0];
-		password = properties[1];
-		name = properties[2];
-		address = properties[3];
-		phone = properties[4];
-		emailAddress = properties[5];
-		sinOrStNo = properties[6];
-		expiryDate = properties[7];
-		type = properties[8];
-
-
-		JOptionPane.showMessageDialog(null, "ERROR MESSAGE", "Error", JOptionPane.ERROR_MESSAGE);
-
-
-		//TODO: ERIC verify properties are valid
+		while (true) {
+			properties = createInputPopup(properties, "Add New Borrower");
+			if (properties == null) {
+				break;
+			}
+	
+			bid = properties[0];
+			password = properties[1];
+			name = properties[2];
+			address = properties[3];
+			phone = properties[4];
+			emailAddress = properties[5];
+			sinOrStNo = properties[6];
+			expiryDate = properties[7];
+			type = properties[8];
+			
+			if (!VerifyAttributes.notEmpty(bid)) {
+				makeErrorAlert("ID cannot be empty");
+			} else if (!VerifyAttributes.verifyPassword(password)) {
+				makeErrorAlert("Password is invalid");
+			} else if (!VerifyAttributes.notEmpty(name)) {
+				makeErrorAlert("Name cannot be empty");
+			} else if (!VerifyAttributes.notEmpty(address)) {
+				makeErrorAlert("Address is invalid");
+			} else if (!VerifyAttributes.verifyPhone(phone)) {
+				makeErrorAlert("Phone is invalid");
+			} else if (!VerifyAttributes.verifyEmail(emailAddress)) {
+				makeErrorAlert("Sin/Student Number cannot be null");
+			} else if (!VerifyAttributes.notEmpty(sinOrStNo)) {
+				makeErrorAlert("Sin/Student Number cannot be null");
+			} else if (!VerifyAttributes.verifyDate(expiryDate)) {
+				makeErrorAlert("Sin/Student Number cannot be null");
+			} else if (!VerifyAttributes.verifyType(type)) {
+				makeErrorAlert("Sin/Student Number cannot be null");
+			} else {
+				break;
+			}
+		}
 		//TODO: add borrower with given properties
 	}
+	
+	
+	/**
+	 * Make a popup window with an error message
+	 * @param message
+	 */
+	private void makeErrorAlert(String message) {
+		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+	}
+	
+	
 
 	/*
 	Check-out items borrowed by a borrower. To borrow items, borrowers provide their card

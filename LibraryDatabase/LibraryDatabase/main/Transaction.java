@@ -3,6 +3,7 @@ package main;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -19,7 +20,7 @@ public class Transaction {
 	 * @param con
 	 * @return
 	 */
-	public int executeUpdate(PreparedStatement  ps, Connection con) {
+	private int executeUpdate(PreparedStatement  ps, Connection con) {
 		try {
 			int rowCount = ps.executeUpdate();
 			
@@ -44,7 +45,7 @@ public class Transaction {
 	}
 	
 	
-	public ResultSet executeQuery(String query) {
+	private ResultSet executeQuery(String query) {
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  Statement stmt = con.createStatement();
@@ -57,6 +58,37 @@ public class Transaction {
 		}
 	}
 	
+	public void addBorrower(String[] attributes) {
+		PreparedStatement ps = null;
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+		ps = con.prepareStatement("INSERT INTO Borrower VALUES (?,?,?,?,?,?,?,?)");
+		
+		Date d = new Date(0, 0, 0); //attributes[7]
+		
+		ps.setString(1, attributes[1]);
+		ps.setString(2, attributes[2]);
+		ps.setString(3, attributes[3]);
+		ps.setString(4, attributes[4]);
+		ps.setString(5, attributes[5]);
+		ps.setString(6, attributes[6]);
+		ps.setDate(7, d);
+		ps.setString(8, attributes[8]);
+		
+	    
+		} catch (SQLException e) {
+			System.out.println("Message: " + e.getMessage());
+//		    try  {
+//				ps.cancel();	
+//		    }
+//		    catch (SQLException ex) {
+//				System.out.println("Message: " + ex.getMessage());
+//				System.exit(-1);
+//		    }
+			return;
+		}
+		executeUpdate(ps, con);
+	}
 	
 	/*
      * display information about branches
@@ -140,57 +172,5 @@ public class Transaction {
 	{
 	    System.out.println("Message: " + ex.getMessage());
 	}	
-    }
-	
-	
-	
-	/*
-     * inserts a branch
-     */ 
-    private void insertBranch()
-    {
-	int                bid=0;
-	String             bname="";
-	String             baddr="";
-	String             bcity="";
-	int                bphone=0;
-	PreparedStatement  ps;
-	  
-	try
-	{
-		Connection con = DbConnection.getJDBCConnection();
-	  ps = con.prepareStatement("INSERT INTO branch VALUES (?,?,?,?,?)");
-	
-	  ps.setInt(1, bid);
-
-	  ps.setString(2, bname);
-
-	  
-	  if (baddr.length() == 0)
-          {
-	      ps.setString(3, null);
-	  }
-	  else
-	  {
-	      ps.setString(3, baddr);
-	  }
-	 
-	  ps.setString(4, bcity);
-	  String phoneTemp = "";
-	  if (phoneTemp.length() == 0)
-	  {
-	      ps.setNull(5, java.sql.Types.INTEGER);
-	  }
-	  else
-	  {
-	      bphone = Integer.parseInt(phoneTemp);
-	      ps.setInt(5, bphone);
-	  }
-
-	  executeUpdate(ps, con);
-	} catch (SQLException e) {
-		
-	}
-	
     }
 }
