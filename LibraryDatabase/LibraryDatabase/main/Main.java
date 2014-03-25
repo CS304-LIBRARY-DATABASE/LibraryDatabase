@@ -33,8 +33,9 @@ public class Main extends JFrame implements ActionListener{
 	}
 
 
-	private static String CHECK_OUT_NAME = "Check Out Items";
-	private static String ADD_BORROWER_NAME = "Add Borrower";
+	private static final String CHECK_OUT_NAME = "Check Out Items";
+	private static final String ADD_BORROWER_NAME = "Add Borrower";
+	private static final String RETURN_ITEM_NAME = "Return Item";
 
 
 
@@ -52,6 +53,10 @@ public class Main extends JFrame implements ActionListener{
 		checkOut.addActionListener(app);
 		panel.add(checkOut);
 
+		Button returnItem = new Button(RETURN_ITEM_NAME);
+		returnItem.addActionListener(app);
+		panel.add(returnItem);
+
 		return panel;
 	}
 
@@ -65,6 +70,9 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
+
+		if(e.getActionCommand() == RETURN_ITEM_NAME)
+			returnItem();
 	}
 
 	/* 
@@ -99,14 +107,14 @@ public class Main extends JFrame implements ActionListener{
 		//TODO: verify properties are valid
 		//TODO: add borrower with given properties
 	}
-	
+
 	/*
 	Check-out items borrowed by a borrower. To borrow items, borrowers provide their card
 	number and a list with the call numbers of the items they want to check out. The system
 	determines if the borrower's account is valid and if the library items are available for
 	borrowing. Then it creates one or more borrowing records and prints a note with the
 	items and their due day (which is giver to the borrower).
-	*/
+	 */
 	private void checkOut() {
 		// Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 		String[] borid;
@@ -146,13 +154,13 @@ public class Main extends JFrame implements ActionListener{
 			}
 		}
 
-		
+
 		String[] properties = new String[1 + n];
 		properties[0] = "Borrower ID";
-		
+
 		for(int i = 1; i <= n; i++)
 			properties[i] = "Callnumber #" + String.valueOf(i);
-		
+
 		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
 
 		borid = new String[n];
@@ -161,11 +169,32 @@ public class Main extends JFrame implements ActionListener{
 		copyNo = new String[n];
 		//outDate = ;
 		//inDate = ;
-		
+
 		//TODO: verify correct input
 		//TODO: get remaining tuple values
 		//TODO: add to database
+		//TODO: output result
 
+	}
+	
+	/*
+	 * Processes a return. When an item is returned, the clerk records the
+	 * return by providing the item's catalogue number. The system determines
+	 * the borrower who had borrowed the item and records that the item is
+	 * "in". If the item is overdue, a fine is assessed for the borrower.
+	 * If there is a hold request for this item by another borrower, the
+	 * item is registered as "on hold" and a message is send to the borrower
+	 * who made the hold request.
+	 */
+	private void returnItem() {
+		//Fine (fid, amount, issuedDate, paidDate, borid)
+		//BookCopy (callNumber, copyNo, status)
+		//HoldRequest(hid, bid, callNumber, issuedDate)
+		
+		String[] callNumber = {"Call Number"};
+		callNumber = createInputPopup(callNumber, "Return a book");
+		
+		
 	}
 
 
