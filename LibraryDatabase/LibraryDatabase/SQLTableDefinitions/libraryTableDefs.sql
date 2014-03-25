@@ -45,7 +45,7 @@ create table HasSubject
 create table BookCopy
    (callNumber char(20) not null,
    copyNo char(20) not null,
-   status char(20) null,
+   status varchar(7) null,
    primary key(callNumber, copyNo),
    foreign key references Book(callNumber) ON DELETE CASCADE);
 

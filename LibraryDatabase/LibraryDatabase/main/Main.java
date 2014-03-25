@@ -21,6 +21,12 @@ public class Main extends JFrame implements ActionListener{
 
 	public static void main(String[] args)
 	{
+		// make a connection to the database
+		// if successful it will call init() below
+		DbConnection dbc = DbConnection.getInstance();
+	}
+	
+	public static void init() {
 		// Specify where will it appear on the screen:
 		app.setLocation(100, 100);
 		app.setSize(300, 300);
