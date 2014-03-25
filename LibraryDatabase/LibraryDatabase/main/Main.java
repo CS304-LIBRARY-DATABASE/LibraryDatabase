@@ -257,7 +257,7 @@ public class Main extends JFrame implements ActionListener{
 		String password;
 		String name;
 		String address;
-		String phone;
+		String phone = null;
 		String emailAddress;
 		String sinOrStNo;
 		String expiryDate;
@@ -304,6 +304,7 @@ public class Main extends JFrame implements ActionListener{
 			}
 		}
 		//TODO: add borrower with given properties
+		int phoneNum = VerifyAttributes.parsePhoneNumber(phone);
 	}
 
 

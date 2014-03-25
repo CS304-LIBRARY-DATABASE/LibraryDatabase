@@ -58,21 +58,23 @@ public class Transaction {
 		}
 	}
 	
+	/**
+	 * Add a new borrower to Borrower Table
+	 * @param attributes
+	 */
 	public void addBorrower(String[] attributes) {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 		ps = con.prepareStatement("INSERT INTO Borrower VALUES (?,?,?,?,?,?,?,?)");
 		
-		Date d = new Date(0, 0, 0); //attributes[7]
-		
 		ps.setString(1, attributes[1]);
 		ps.setString(2, attributes[2]);
 		ps.setString(3, attributes[3]);
 		ps.setString(4, attributes[4]);
-		ps.setString(5, attributes[5]);
+		ps.setInt(5, VerifyAttributes.parsePhoneNumber(attributes[5]));
 		ps.setString(6, attributes[6]);
-		ps.setDate(7, d);
+		ps.setDate(7, VerifyAttributes.parseDate(attributes[7]));
 		ps.setString(8, attributes[8]);
 		
 	    
@@ -90,87 +92,51 @@ public class Transaction {
 		executeUpdate(ps, con);
 	}
 	
-	/*
-     * display information about branches
-     */ 
-    private void showBranch()
-    {
-	String     bid;
-	String     bname;
-	String     baddr;
-	String     bcity;
-	String     bphone;
-	Statement  stmt;
-	ResultSet  rs;
-	   
-	try
-	{Connection con = DbConnection.getJDBCConnection();
-	  stmt = con.createStatement();
+	/**
+	 * Select all borrowers in Borrower table and return as String
+	 * @return
+	 */
+	public String listBorrowers() {
+		String     bid;
+		String     bname;
+		String     baddr;
+		String     bcity;
+		String     bphone;
+		Statement  stmt;
+		ResultSet  rs;
+		String result = "";
+		   
+		try {
+		  Connection con = DbConnection.getJDBCConnection();
+		  stmt = con.createStatement();
 
-	  rs = executeQuery("SELECT * FROM branch");
+		  rs = executeQuery("SELECT * FROM Borrower");
 
-	  // get info on ResultSet
-	  ResultSetMetaData rsmd = rs.getMetaData();
+		  // get info on ResultSet
+		  ResultSetMetaData rsmd = rs.getMetaData();
 
-	  // get number of columns
-	  int numCols = rsmd.getColumnCount();
+		  // get number of columns
+		  int numCols = rsmd.getColumnCount();
 
-	  System.out.println(" ");
-	  
-	  // display column names;
-	  for (int i = 0; i < numCols; i++)
-	  {
-	      // get column name and print it
+		  // display column names;
+		  for (int i = 0; i < numCols; i++) {
+		      // get column name and print it
+			  System.out.printf("%-15s", rsmd.getColumnName(i+1));    
+		  }
 
-	      System.out.printf("%-15s", rsmd.getColumnName(i+1));    
-	  }
-
-	  System.out.println(" ");
-
-	  while(rs.next())
-	  {
-	      // for display purposes get everything from Oracle 
-	      // as a string
-
-	      // simplified output formatting; truncation may occur
-
-	      bid = rs.getString("branch_id");
-	      System.out.printf("%-10.10s", bid);
-
-	      bname = rs.getString("branch_name");
-	      System.out.printf("%-20.20s", bname);
-
-	      baddr = rs.getString("branch_addr");
-	      if (rs.wasNull())
-	      {
-	    	  System.out.printf("%-20.20s", " ");
-              }
-	      else
-	      {
-	    	  System.out.printf("%-20.20s", baddr);
-	      }
-
-	      bcity = rs.getString("branch_city");
-	      System.out.printf("%-15.15s", bcity);
-
-	      bphone = rs.getString("branch_phone");
-	      if (rs.wasNull())
-	      {
-	    	  System.out.printf("%-15.15s\n", " ");
-              }
-	      else
-	      {
-	    	  System.out.printf("%-15.15s\n", bphone);
-	      }      
-	  }
- 
-	  // close the statement; 
-	  // the ResultSet will also be closed
-	  stmt.close();
-	}
-	catch (SQLException ex)
-	{
-	    System.out.println("Message: " + ex.getMessage());
-	}	
+		  
+		  int i = 0;
+		  while(rs.next()) {
+			  i++;
+		      result += rs.getNString(1);
+		  }
+	 
+		  // close the statement; 
+		  // the ResultSet will also be closed
+		  stmt.close();
+		} catch (SQLException ex) {
+		    System.out.println("Message: " + ex.getMessage());
+		}
+		return result;
     }
 }

@@ -13,7 +13,7 @@ create table Borrower
    password char(16) not null, 
    name char(11) not null,
    address varchar(40) null,
-   phone int null,
+   phone char(12) null,
    emailAddress varchar(40) null,
    sinOrStNo char(9) not null,
    expiryDate date not null,

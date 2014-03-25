@@ -1,5 +1,6 @@
 package main;
 
+import java.sql.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,13 @@ public class VerifyAttributes {
 
 	
 	public static boolean verifyPhone(String phone) {
+		phone = phone.trim().replaceAll(" ", "").replaceAll("-", "");
 		return verifyInteger(phone);
+	}
+	
+	public static Integer parsePhoneNumber(String phone) {
+		phone = phone.trim().replaceAll(" ", "").replaceAll("-", "");
+		return Integer.parseInt(phone);
 	}
 	
 	public static boolean verifyPassword(String password) {
@@ -63,10 +70,6 @@ public class VerifyAttributes {
 		return false;
 	}
 	
-	public static boolean verifyDate(String s) {
-		return s != null;
-	}
-
 	public static boolean verifyType(String type) {
 		if (notEmpty(type)) {
 			type = type.toLowerCase();
@@ -75,5 +78,27 @@ public class VerifyAttributes {
 				   type.equals("librarian");
 		}
 		return false;
+	}
+	
+	public static boolean verifyDate(String s) {
+		String [] split = s.split("/");
+		if (split.length != 3) {
+			split = s.split(" ");
+			if (split.length != 3) {
+				return false;
+			}
+		}
+		return verifyInteger(split[0]) && verifyInteger(split[1]) && verifyInteger(split[2]);
+	}
+	
+	public static Date parseDate(String s) {
+		String [] split = s.split("/");
+		if (split.length != 3) {
+			split = s.split(" ");
+			if (split.length != 3) {
+				return null;
+			}
+		}
+		return new Date(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
 	}
 }
