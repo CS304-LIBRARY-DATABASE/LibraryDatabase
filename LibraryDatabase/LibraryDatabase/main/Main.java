@@ -185,6 +185,8 @@ public class Main extends JFrame implements ActionListener{
 		type = properties[8];
 		
 		
+		JOptionPane.showMessageDialog(null, "ERROR MESSAGE", "Error", JOptionPane.ERROR_MESSAGE);
+
 
 		//TODO: ERIC verify properties are valid
 		//TODO: add borrower with given properties
