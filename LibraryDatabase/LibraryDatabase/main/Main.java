@@ -308,29 +308,39 @@ public class Main extends JFrame implements ActionListener{
 			type = properties[8];
 
 			
-			if (!VerifyAttributes.notEmpty(bid)) {
-				makeErrorAlert("ID cannot be empty");
-			} else if (VerifyAttributes.verifyPassword(password) != null) {
+		/*	if (VerifyAttributes.verifyBID(bid) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			} 
+			else if (VerifyAttributes.verifyPassword(password) != null) {
 				makeErrorAlert(VerifyAttributes.verifyPassword(password));
-			} else if (!VerifyAttributes.notEmpty(name)) {
-				makeErrorAlert("Name cannot be empty");
-			} else if (!VerifyAttributes.notEmpty(address)) {
-				makeErrorAlert("Address is invalid");
-			} else if (VerifyAttributes.verifyPhone(phone) != null) {
+			} 
+			else if (VerifyAttributes.verifyBorrowerName(name) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBorrowerName(name));
+			} 
+			else if (VerifyAttributes.verifyAddress(address) != null) {
+				makeErrorAlert(VerifyAttributes.verifyAddress(address));
+			} 
+			else if (VerifyAttributes.verifyPhone(phone) != null) {
 				makeErrorAlert(VerifyAttributes.verifyPhone(phone));
-			} else if (VerifyAttributes.verifyEmail(emailAddress) != null) {
+			} 
+			else if (VerifyAttributes.verifyEmail(emailAddress) != null) {
 				makeErrorAlert(VerifyAttributes.verifyEmail(emailAddress));
-			} else if (!VerifyAttributes.notEmpty(sinOrStNo)) {
-				makeErrorAlert("Sin/Student Number cannot be null");
-			} else if (VerifyAttributes.verifyDate(expiryDate) != null) {
+			} 
+			else if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
+			} */
+			if (VerifyAttributes.verifyDate(expiryDate) != null) {
 				makeErrorAlert(VerifyAttributes.verifyDate(expiryDate));
-			} else if (VerifyAttributes.verifyType(type) != null) {
+			} 
+			else if (VerifyAttributes.verifyType(type) != null) {
 				makeErrorAlert(VerifyAttributes.verifyType(type));
-			} else {
+			} 
+			else {
 				// add borrower with given properties
 
 				try{
 					TransactionManager.addBorrower(properties);
+					makeSuccessAlert("Borrower successfully added");
 				}
 				catch(TransactionException e){
 					makeErrorAlert(e.getMessage());
@@ -340,17 +350,6 @@ public class Main extends JFrame implements ActionListener{
 			}
 		}
 	}
-
-
-	/**
-	 * Make a popup window with an error message
-	 * @param message
-	 */
-	private void makeErrorAlert(String message) {
-		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
-	}
-
-
 
 	/**
 	Check-out items borrowed by a borrower. To borrow items, borrowers provide their card
@@ -754,4 +753,21 @@ public class Main extends JFrame implements ActionListener{
 
 		return input;
 	}
+	
+	/**
+	 * Make a popup window with an error message
+	 * @param message
+	 */
+	private void makeErrorAlert(String message) {
+		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
+	}
+	
+	/**
+	 * Make a popup window with an success message
+	 * @param message
+	 */
+	private void makeSuccessAlert(String message) {
+		JOptionPane.showMessageDialog(null, message, "Success", JOptionPane.INFORMATION_MESSAGE);
+	}
+
 }
