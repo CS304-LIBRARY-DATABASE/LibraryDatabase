@@ -157,6 +157,6 @@ public class TransactionManager {
 		} catch (SQLException ex) {
 		    System.out.println("Message: " + ex.getMessage());
 		}
-		return result;
+		return false;
 	}
 }
