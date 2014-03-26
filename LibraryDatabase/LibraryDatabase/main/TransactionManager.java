@@ -1,6 +1,7 @@
 package main;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -134,29 +135,59 @@ public class TransactionManager {
 	 * @param bid
 	 * @return
 	 */
-	public static boolean isBorrowerValid(String bid) {
+	public static void verifyBorrower(String bid) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
-		String result = "| bid | PW | Name | Address | Phone | Email | Sin/StNo | ExpDate | Type |\n";
 		   
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  stmt = con.createStatement();
 
-		  rs = executeQuery("SELECT * FROM Borrower");
+		  rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'");
 		  
-		  int i = 0;
-		  while(rs.next()) {
+		  if (rs.next()) {
+			  Date expiryDate = rs.getDate(8);
+			  // borrower has expired
+			  if (expiryDate.before(new java.util.Date())) {
+				  throw new TransactionException("Borrower with bid " + bid + " has a"
+				  		+ " past expiry date of " + expiryDate.toString());
+			  }
+		  }
+		  // no borrowers with bid found
+		  else {
+			  throw new TransactionException("Borrower with bid " + bid + " does not exist");
+		  }
+		  
+		  rs = executeQuery("SELECT bw.callNumber, bw.copyNo, f.amount"
+		  		+ "FROM Borrower b natural join Borrowing bw natural join Fine f"
+		  		+ " where b.bid = '" + bid + "' and f.paidDate is null");
+		  String error = "";
+		  int i=0;
+		  while (rs.next()) {
+			  if (i == 0) {
+				  error += "Error, Borrower has outstanding fine(s) on:\n" + 
+						  "| callNumber | copyNumber | fine amount |\n";
+			  }
+			  error += "| " + rs.getString(1) + " | ";
+			  error += rs.getString(2) + " | ";
+			  error += rs.getString(3) + " |\n";
 			  i++;
-			  
+		  }
+		  if (!error.isEmpty()) {
+			  throw new TransactionException(error);
 		  }
 	 
 		  // close the statement; 
 		  // the ResultSet will also be closed
 		  stmt.close();
 		} catch (SQLException ex) {
-		    System.out.println("Message: " + ex.getMessage());
+			throw new TransactionException("Error: " + ex.getMessage());
 		}
-		return false;
+	}
+
+
+	public static void checkAvailability(String[] properties) {
+		// TODO Auto-generated method stub
+		
 	}
 }

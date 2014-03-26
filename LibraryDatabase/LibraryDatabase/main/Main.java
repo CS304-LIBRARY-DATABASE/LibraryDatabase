@@ -415,6 +415,19 @@ public class Main extends JFrame implements ActionListener{
 
 		//TODO: verify correct input
 		//TODO: get remaining tuple values
+		
+		try {
+			TransactionManager.verifyBorrower(bid);
+		} catch (TransactionException e) {
+			makeErrorAlert(e.getMessage());
+		}
+		
+		String [] callNumberList = new String[properties.length -1];
+		for (int i = 1; i <=n; i++) {
+			callNumberList[i - 1] = properties[i];
+		}
+		TransactionManager.checkAvailability(callNumberList);
+		
 		//TODO: add to database
 		//TODO: output result
 
