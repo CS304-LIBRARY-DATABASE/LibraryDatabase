@@ -618,8 +618,8 @@ public class Main extends JFrame implements ActionListener{
 			publisher = properties[4];
 			year = properties[5];
 
-			if (VerifyAttributes.verifyCallNumber(callNumber) != null) {
-				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber));
+			if (VerifyAttributes.verifyCallNumber(callNumber, year) != null) {
+				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber, year));
 			} 
 			else if (VerifyAttributes.verifyISBN(isbn) != null) {
 				makeErrorAlert(VerifyAttributes.verifyISBN(isbn));
@@ -636,24 +636,13 @@ public class Main extends JFrame implements ActionListener{
 			else if (VerifyAttributes.verifyYear(year) != null) {
 				makeErrorAlert(VerifyAttributes.verifyYear(year));
 			} 
-			else {
-				// add borrower with given properties
-
-				try{
-					TransactionManager.addBorrower(properties);
-					makeSuccessAlert("Borrower successfully added");
-				}
-				catch(TransactionException e){
-					makeErrorAlert(e.getMessage());
-				}
-
+			else 
 				break;
-			}
-
+			
 		}
 
-
-
+		
+		//TODO: validate author/subject
 		boolean addAuthor;
 		int result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
 				"Additional Author", JOptionPane.YES_NO_OPTION,

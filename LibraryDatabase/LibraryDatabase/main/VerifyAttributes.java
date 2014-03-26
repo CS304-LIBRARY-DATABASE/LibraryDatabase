@@ -18,6 +18,10 @@ public class VerifyAttributes {
 			"^(\\d(-| )?)?\\d{3}(-| )?\\d{3}(-| )?\\d{4}$";
 
 	private static Pattern phonePattern = Pattern.compile(PHONE_PATTERN);
+	
+	private static final String ISBN_PATTERN = "^\\d{9}[\\d|X]$";
+	private static Pattern ISBNPattern = Pattern.compile(ISBN_PATTERN);
+
 
 
 	public static boolean notEmpty(String s) {
@@ -150,6 +154,9 @@ public class VerifyAttributes {
 	}
 
 	public static String verifyDate(String s) {
+		if(isEmpty(s))
+			return ERROR_PATTERN + "Date field is empty";
+
 		String [] split = s.split("/");
 
 		if (split.length != 3) {
@@ -184,35 +191,88 @@ public class VerifyAttributes {
 			}
 		}
 		return new Date(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
-	}	
-
-	public static String verifyCallNumber(String callNumber) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
+	public static String verifyCallNumber(String callNumber, String year) {
+		//QA76.73 J38 2004
+		//primary number, secondary number, book's year
+		
+		if(isEmpty(callNumber))
+			return ERROR_PATTERN + "Call number field is empty";
+				
+		String [] split = callNumber.split(" ");
+		
+		if (split.length != 3) 
+			return ERROR_PATTERN + "Call number must have primary number, secondary number and year separated by spaces";
+
+		if(isEmpty(year))
+			return ERROR_PATTERN + "Need to know year to verify call number";
+		
+		if (!split[2].equals(year) || !verifyInteger(split[2]))
+			return ERROR_PATTERN + "Call number must contain correct year at the end";
+		
+		if(callNumber.length() > 20)
+			return ERROR_PATTERN + "Call number must be less than 21 characters";
+		
+		return null;
+	}
+	
 	public static String verifyISBN(String isbn) {
-		// TODO Auto-generated method stub
+
+		if(isEmpty(isbn))
+			return ERROR_PATTERN + "ISBN field is empty";
+
+		Matcher matcher = ISBNPattern.matcher(isbn);
+		if (!matcher.matches())
+			return ERROR_PATTERN + "ISBN is malformed: must be 10 characters, may end in X";
+		
 		return null;
 	}
 
 	public static String verifyTitle(String title) {
-		// TODO Auto-generated method stub
+		
+		if(isEmpty(title))
+			return ERROR_PATTERN + "Title field is empty";
+		
+		if(title.length() > 30)
+			return ERROR_PATTERN + "Title must be less than 31 characters";
+
 		return null;
 	}
 
 	public static String verifyMainAuthor(String mainAuthor) {
-		// TODO Auto-generated method stub
+		
+		if(isEmpty(mainAuthor))
+			return ERROR_PATTERN + "Main author field is empty";
+		
+		if(mainAuthor.length() > 40)
+			return ERROR_PATTERN + "Main author must be less than 41 characters";
+
 		return null;
 	}
 
 	public static String verifyPublisher(String publisher) {
-		// TODO Auto-generated method stub
+
+		if(isEmpty(publisher))
+			return ERROR_PATTERN + "Publisher field is empty";
+		
+		if(publisher.length() > 41)
+			return ERROR_PATTERN + "Publisher must be less than 41 characters";
+
 		return null;
 	}
 
 	public static String verifyYear(String year) {
-		// TODO Auto-generated method stub
+		
+		if(isEmpty(year))
+			return ERROR_PATTERN + "Year field is empty";
+		
+		if(year.length() != 4 || !verifyInteger(year))
+			return ERROR_PATTERN + "Year must be 4 digits";
+				
+		if(year.compareTo("2014") > 0)
+			return ERROR_PATTERN + "Year must not be in the future!";
+		
 		return null;
 	}
 }
