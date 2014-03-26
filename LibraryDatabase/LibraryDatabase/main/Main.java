@@ -263,13 +263,16 @@ public class Main extends JFrame implements ActionListener{
 		String expiryDate;
 		String type;
 
-		String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
-
+		String memory[] = null;
+		
 		while (true) {
-			properties = createInputPopup(properties, "Add new borrower");
-			if (properties == null) {
-				break;
-			}
+			String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
+			properties = createInputPopup(properties, "Add new borrower", memory);
+			
+			if (properties == null)
+				return;
+			
+			memory = properties;
 
 			bid = properties[0];
 			password = properties[1];
@@ -371,7 +374,7 @@ public class Main extends JFrame implements ActionListener{
 		for(int i = 1; i <= n; i++)
 			properties[i] = "Callnumber #" + String.valueOf(i);
 
-		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books");
+		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books", null);
 
 		borid = new String[n];
 		bid =  properties[0];
@@ -405,7 +408,7 @@ public class Main extends JFrame implements ActionListener{
 
 
 		String[] callNumber = {"Call Number"};
-		callNumber = createInputPopup(callNumber, "Return a book");
+		callNumber = createInputPopup(callNumber, "Return a book", null);
 
 		// TODO: determine borrower
 		// TODO: check if borrower has outstanding fine, change afterwards
@@ -440,7 +443,7 @@ public class Main extends JFrame implements ActionListener{
 
 		while(true){
 			String[] searchKey = {"Title", "Author", "Subject"};
-			searchKey = createInputPopup(searchKey, "Search keys");
+			searchKey = createInputPopup(searchKey, "Search keys", null);
 
 			if(searchKey == null)
 				return;
@@ -469,8 +472,13 @@ public class Main extends JFrame implements ActionListener{
 		String bid;
 
 		String[] getInfo = {"Borrower ID"};
-		getInfo = createInputPopup(getInfo, "Validation");
+		getInfo = createInputPopup(getInfo, "Validation", null);
 
+		if(getInfo == null)
+			return;
+		
+		bid = getInfo[0];
+		
 		//TODO: check that Borrower ID is good
 		//TODO: query for borrowed tuples
 		//TODO: query for fines
@@ -489,15 +497,43 @@ public class Main extends JFrame implements ActionListener{
 		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
 		//HoldRequest(hid, bid, callNumber, issuedDate)
 		//BookCopy (callNumber, copyNo, status)
-		//TODO:Everything
+
+		String callNumber;
 		
+		String[] book = {"Call #"};
+		book = createInputPopup(book, "Hold request", null);
+		
+		if(book == null)
+			return;
+		
+		callNumber = book[0];
+
+		//TODO: verify book exists and is out
+		//TODO: place hold request
 	}
 
 	/*
 	 * Pay a fine.
 	 */
 	private void payFine() {
-		// TODO Everything
+		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
+
+		String bid;
+
+		String[] getInfo = {"Borrower ID"};
+		getInfo = createInputPopup(getInfo, "Validation", null);
+
+		if(getInfo == null)
+			return;
+		
+		bid = getInfo[0];
+
+		
+		//TODO: check that Borrower ID is good
+		//TODO: query for fine tuples
+		//TODO: get user to pay fine
+
+
 
 	}
 
@@ -520,7 +556,7 @@ public class Main extends JFrame implements ActionListener{
 
 		String[] properties = {"Call #", "ISBN", "Title", "Main Author", "Publisher", "Year"};
 
-		properties = createInputPopup(properties, "Add new book");
+		properties = createInputPopup(properties, "Add new book", null);
 
 		if (properties == null) {
 			return;
@@ -545,7 +581,7 @@ public class Main extends JFrame implements ActionListener{
 
 		while(addAuthor){
 			String[] author = {"Name"};
-			author = createInputPopup(author, "Add author to " + title);
+			author = createInputPopup(author, "Add author to " + title, null);
 
 			//TODO: add author to database
 
@@ -568,7 +604,7 @@ public class Main extends JFrame implements ActionListener{
 
 		while(addSubject){
 			String[] author = {"Name"};
-			author = createInputPopup(author, "Add subject to " + title);
+			author = createInputPopup(author, "Add subject to " + title, null);
 
 			//TODO: add subject to database
 
@@ -610,7 +646,7 @@ public class Main extends JFrame implements ActionListener{
 
 		while(true){
 			String[] response = {"Year", "# of Results"};
-			response = createInputPopup(response, "Find popular items");
+			response = createInputPopup(response, "Find popular items", null);
 
 			if(response == null)
 				return;
@@ -644,7 +680,7 @@ public class Main extends JFrame implements ActionListener{
 
 
 	@SuppressWarnings("static-access")
-	private String[] createInputPopup(String[] labels, String title){
+	private String[] createInputPopup(String[] labels, String title, String[] memory){
 
 		int n = labels.length;
 		Object[] message = new Object[n];
@@ -656,6 +692,10 @@ public class Main extends JFrame implements ActionListener{
 			p.add(new JLabel(labels[i], JLabel.TRAILING));
 			JTextField text = new JTextField(20);
 			fields[i] = text;
+			
+			if(memory != null)
+				text.setText(memory[i]);
+			
 			p.add(text);
 
 			message[i] = p;
@@ -683,5 +723,4 @@ public class Main extends JFrame implements ActionListener{
 
 		return input;
 	}
-
 }
