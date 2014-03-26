@@ -108,15 +108,15 @@ public class TransactionManager {
 		  while(rs.next()) {
 			  i++;
 			  result += "| ";
-		      result += rs.getNString(1) + " | ";
-		      result += rs.getNString(2) + " | ";
-		      result += rs.getNString(3) + " | ";
-		      result += rs.getNString(4) + " | ";
+		      result += rs.getString(1) + " | ";
+		      result += rs.getString(2) + " | ";
+		      result += rs.getString(3) + " | ";
+		      result += rs.getString(4) + " | ";
 		      result += rs.getString(5) + " | ";
-		      result += rs.getNString(6) + " | ";
-		      result += rs.getNString(7) + " | ";
+		      result += rs.getString(6) + " | ";
+		      result += rs.getString(7) + " | ";
 		      result += rs.getDate(8) + " | ";
-		      result += rs.getNString(9) + " |\n";
+		      result += rs.getString(9) + " |\n";
 		  }
 	 
 		  // close the statement; 
@@ -127,4 +127,36 @@ public class TransactionManager {
 		}
 		return result;
     }
+	
+	/**
+	 * Check if a borrower's expiryDate has passed
+	 * And check if the borrower has any outstanding fines
+	 * @param bid
+	 * @return
+	 */
+	public static boolean isBorrowerValid(String bid) {
+		Statement  stmt;
+		ResultSet  rs;
+		String result = "| bid | PW | Name | Address | Phone | Email | Sin/StNo | ExpDate | Type |\n";
+		   
+		try {
+		  Connection con = DbConnection.getJDBCConnection();
+		  stmt = con.createStatement();
+
+		  rs = executeQuery("SELECT * FROM Borrower");
+		  
+		  int i = 0;
+		  while(rs.next()) {
+			  i++;
+			  
+		  }
+	 
+		  // close the statement; 
+		  // the ResultSet will also be closed
+		  stmt.close();
+		} catch (SQLException ex) {
+		    System.out.println("Message: " + ex.getMessage());
+		}
+		return result;
+	}
 }

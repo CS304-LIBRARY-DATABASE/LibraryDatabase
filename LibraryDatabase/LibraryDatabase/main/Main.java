@@ -24,6 +24,14 @@ import javax.swing.border.TitledBorder;
 public class Main extends JFrame implements ActionListener{
 
 	private static Main app = new Main();
+	
+	private static JTextArea box;
+	
+	private static final String ADD_BORROWER_NAME = "Add Borrower";
+	private static final String CHECK_OUT_NAME = "Check Out Items";
+	private static final String RETURN_ITEM_NAME = "Return Item";
+	private static final String CHECK_OVERDUE_NAME = "Check Overdue Items";
+	private static final String LIST_BORROWERS = "List Borrowers";
 
 
 	public static void main(String[] args)
@@ -85,12 +93,6 @@ public class Main extends JFrame implements ActionListener{
 	}
 
 
-	private static final String ADD_BORROWER_NAME = "Add Borrower";
-	private static final String CHECK_OUT_NAME = "Check Out Items";
-	private static final String RETURN_ITEM_NAME = "Return Item";
-	private static final String CHECK_OVERDUE_NAME = "Check Overdue Items";
-
-
 	private static JPanel clerkInterface(){
 		JPanel panel = new JPanel();
 
@@ -105,6 +107,10 @@ public class Main extends JFrame implements ActionListener{
 		Button addNewBorrower = new Button(ADD_BORROWER_NAME);
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
+		
+		Button listBorrowers = new Button(LIST_BORROWERS);
+		listBorrowers.addActionListener(app);
+		panel.add(listBorrowers);
 
 		Button checkOut = new Button(CHECK_OUT_NAME);
 		checkOut.addActionListener(app);
@@ -194,7 +200,7 @@ public class Main extends JFrame implements ActionListener{
 		title = BorderFactory.createTitledBorder("Output");
 		panel.setBorder(title);
 
-		JTextArea box = new JTextArea();
+		box = new JTextArea();
 		JScrollPane scroll = new JScrollPane(box);
 
 		box.setSize(100, 300);
@@ -207,7 +213,20 @@ public class Main extends JFrame implements ActionListener{
 
 		return panel;		
 	}
+	
+	/**
+	 * 
+	 * @param s
+	 */
+	private static void writeToOutputBox(String s) {
+		box.setText(s);
+	}
 
+
+	private void listBorrowers() {
+		String borrowerList = TransactionManager.listBorrowers();
+		writeToOutputBox(borrowerList);
+	}
 
 
 	@Override
@@ -215,7 +234,10 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == ADD_BORROWER_NAME)
 			addBorrower();
-
+		
+		if(e.getActionCommand() == LIST_BORROWERS)
+			listBorrowers();
+		
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
 
@@ -247,6 +269,7 @@ public class Main extends JFrame implements ActionListener{
 			popularBooks();
 
 	}
+
 
 	/* 
 	 * Add a new borrower to the library. The user should provide all the required information
@@ -329,7 +352,7 @@ public class Main extends JFrame implements ActionListener{
 
 
 
-	/*
+	/**
 	Check-out items borrowed by a borrower. To borrow items, borrowers provide their card
 	number and a list with the call numbers of the items they want to check out. The system
 	determines if the borrower's account is valid and if the library items are available for
