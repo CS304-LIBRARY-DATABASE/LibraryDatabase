@@ -45,6 +45,12 @@ public class DbConnection implements ActionListener {
 	      usernameField = new JTextField(10);
 	      passwordField = new JPasswordField(10);
 	      passwordField.setEchoChar('*');
+	      
+	      
+	      //TODO: remove before demo
+	      usernameField.setText("ora_x7b8");
+	      passwordField.setText("a26747113");
+
 
 	      JButton loginButton = new JButton("Log In");
 

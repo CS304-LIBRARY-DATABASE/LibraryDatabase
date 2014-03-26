@@ -264,14 +264,14 @@ public class Main extends JFrame implements ActionListener{
 		String type;
 
 		String memory[] = null;
-		
+
 		while (true) {
 			String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
 			properties = createInputPopup(properties, "Add new borrower", memory);
-			
+
 			if (properties == null)
 				return;
-			
+
 			memory = properties;
 
 			bid = properties[0];
@@ -284,27 +284,35 @@ public class Main extends JFrame implements ActionListener{
 			expiryDate = properties[7];
 			type = properties[8];
 
+			
 			if (!VerifyAttributes.notEmpty(bid)) {
 				makeErrorAlert("ID cannot be empty");
-			} else if (!VerifyAttributes.verifyPassword(password)) {
-				makeErrorAlert("Password is invalid");
+			} else if (VerifyAttributes.verifyPassword(password) != null) {
+				makeErrorAlert(VerifyAttributes.verifyPassword(password));
 			} else if (!VerifyAttributes.notEmpty(name)) {
 				makeErrorAlert("Name cannot be empty");
 			} else if (!VerifyAttributes.notEmpty(address)) {
 				makeErrorAlert("Address is invalid");
-			} else if (!VerifyAttributes.verifyPhone(phone)) {
-				makeErrorAlert("Phone is invalid");
-			} else if (!VerifyAttributes.verifyEmail(emailAddress)) {
-				makeErrorAlert("Email address is invalid");
+			} else if (VerifyAttributes.verifyPhone(phone) != null) {
+				makeErrorAlert(VerifyAttributes.verifyPhone(phone));
+			} else if (VerifyAttributes.verifyEmail(emailAddress) != null) {
+				makeErrorAlert(VerifyAttributes.verifyEmail(emailAddress));
 			} else if (!VerifyAttributes.notEmpty(sinOrStNo)) {
 				makeErrorAlert("Sin/Student Number cannot be null");
-			} else if (!VerifyAttributes.verifyDate(expiryDate)) {
-				makeErrorAlert("Expiry date is invalid");
-			} else if (!VerifyAttributes.verifyType(type)) {
-				makeErrorAlert("Type is invalid");
+			} else if (VerifyAttributes.verifyDate(expiryDate) != null) {
+				makeErrorAlert(VerifyAttributes.verifyDate(expiryDate));
+			} else if (VerifyAttributes.verifyType(type) != null) {
+				makeErrorAlert(VerifyAttributes.verifyType(type));
 			} else {
 				// add borrower with given properties
-				TransactionManager.addBorrower(properties);
+
+				try{
+					TransactionManager.addBorrower(properties);
+				}
+				catch(TransactionException e){
+					makeErrorAlert(e.getMessage());
+				}
+
 				break;
 			}
 		}
@@ -451,13 +459,13 @@ public class Main extends JFrame implements ActionListener{
 			title = searchKey[0];
 			author = searchKey[1];
 			subject = searchKey[2];
-			
+
 			if(title.isEmpty() && author.isEmpty() && subject.isEmpty())
 				JOptionPane.showMessageDialog(null, "Please enter a search key", "No input", JOptionPane.ERROR_MESSAGE);
 			else
 				break;
 		}
-		
+
 		//TODO: search/filter for relevant books
 		//TODO: display books
 	}
@@ -476,9 +484,9 @@ public class Main extends JFrame implements ActionListener{
 
 		if(getInfo == null)
 			return;
-		
+
 		bid = getInfo[0];
-		
+
 		//TODO: check that Borrower ID is good
 		//TODO: query for borrowed tuples
 		//TODO: query for fines
@@ -499,13 +507,13 @@ public class Main extends JFrame implements ActionListener{
 		//BookCopy (callNumber, copyNo, status)
 
 		String callNumber;
-		
+
 		String[] book = {"Call #"};
 		book = createInputPopup(book, "Hold request", null);
-		
+
 		if(book == null)
 			return;
-		
+
 		callNumber = book[0];
 
 		//TODO: verify book exists and is out
@@ -525,10 +533,10 @@ public class Main extends JFrame implements ActionListener{
 
 		if(getInfo == null)
 			return;
-		
+
 		bid = getInfo[0];
 
-		
+
 		//TODO: check that Borrower ID is good
 		//TODO: query for fine tuples
 		//TODO: get user to pay fine
@@ -692,10 +700,10 @@ public class Main extends JFrame implements ActionListener{
 			p.add(new JLabel(labels[i], JLabel.TRAILING));
 			JTextField text = new JTextField(20);
 			fields[i] = text;
-			
+
 			if(memory != null)
 				text.setText(memory[i]);
-			
+
 			p.add(text);
 
 			message[i] = p;

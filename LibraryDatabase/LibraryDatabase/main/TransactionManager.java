@@ -56,8 +56,9 @@ public class TransactionManager {
 	/**
 	 * Add a new borrower to Borrower Table
 	 * @param attributes
+	 * @throws TransactionException 
 	 */
-	public static void addBorrower(String[] attributes) {
+	public static void addBorrower(String[] attributes) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
@@ -76,6 +77,7 @@ public class TransactionManager {
 	    
 		} catch (SQLException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
 //		    try  {
 //				ps.cancel();	
 //		    }
@@ -83,7 +85,6 @@ public class TransactionManager {
 //				System.out.println("Message: " + ex.getMessage());
 //				System.exit(-1);
 //		    }
-			return;
 		}
 		executeUpdate(ps, con);
 	}
