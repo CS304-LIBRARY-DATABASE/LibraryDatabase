@@ -37,7 +37,7 @@ public class VerifyAttributes {
 
 		return false;
 	}
-	
+
 	public static boolean verifyFloat(String number) {
 		try {
 			Float.parseFloat(number);
@@ -51,14 +51,14 @@ public class VerifyAttributes {
 	public static String parsePhoneNumber(String phone) {
 		return phone.trim().replaceAll(" ", "").replaceAll("-", "");
 	}
-	
+
 	public static String verifyBID(String bid) {
 		if(isEmpty(bid))
 			return ERROR_PATTERN + "Borrower ID field is empty";
 
 		if(bid.length() > 11)
 			return ERROR_PATTERN + "Borrower ID must be less than 12 characters";
-		
+
 		if(!verifyFloat(bid))
 			return ERROR_PATTERN + "Borrower ID must be numerical";
 
@@ -98,14 +98,14 @@ public class VerifyAttributes {
 
 		return null;
 	}
-	
+
 	public static String verifySinOrStNo(String sinOrStNo) {
 		if(isEmpty(sinOrStNo))
 			return ERROR_PATTERN + "SIN/Student # field is empty";
 
 		if(sinOrStNo.length() > 9)
 			return ERROR_PATTERN + "SIN/Student # must be less than 10 characters";
-		
+
 		if(!verifyFloat(sinOrStNo))
 			return ERROR_PATTERN + "SIN/Student # must be numerical";
 
@@ -151,26 +151,26 @@ public class VerifyAttributes {
 
 	public static String verifyDate(String s) {
 		String [] split = s.split("/");
-		
+
 		if (split.length != 3) {
 			split = s.split(" ");
 			if (split.length != 3) {
 				return ERROR_PATTERN + "Date must be in the form \"DY MT YR\"";
 			}
 		}
-				
+
 		if(!verifyInteger(split[0]) || !verifyInteger(split[1]) || !verifyInteger(split[2]))
 			return ERROR_PATTERN + "Date must only contain numbers";
-		
-		
+
+
 		@SuppressWarnings("deprecation")
 		java.util.Date date = new Date(100 + Integer.valueOf(split[2]),
 				Integer.valueOf(split[1]) - 1, Integer.valueOf(split[0]) - 1);
-		
-		
+
+
 		if(date.before(new java.util.Date()))
 			return ERROR_PATTERN + "Date cannot be before today's date. Check that it is in the form \"DY MT YR\"";
-		
+
 		return null;
 	}
 
@@ -184,5 +184,35 @@ public class VerifyAttributes {
 			}
 		}
 		return new Date(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+	}	
+
+	public static String verifyCallNumber(String callNumber) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static String verifyISBN(String isbn) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static String verifyTitle(String title) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static String verifyMainAuthor(String mainAuthor) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static String verifyPublisher(String publisher) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static String verifyYear(String year) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
