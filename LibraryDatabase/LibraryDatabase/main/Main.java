@@ -24,9 +24,9 @@ import javax.swing.border.TitledBorder;
 public class Main extends JFrame implements ActionListener{
 
 	private static Main app = new Main();
-
+	
 	private static JTextArea box;
-
+	
 	private static final String ADD_BORROWER_NAME = "Add Borrower";
 	private static final String CHECK_OUT_NAME = "Check Out Items";
 	private static final String RETURN_ITEM_NAME = "Return Item";
@@ -107,7 +107,7 @@ public class Main extends JFrame implements ActionListener{
 		Button addNewBorrower = new Button(ADD_BORROWER_NAME);
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
-
+		
 		Button listBorrowers = new Button(LIST_BORROWERS);
 		listBorrowers.addActionListener(app);
 		panel.add(listBorrowers);
@@ -213,19 +213,15 @@ public class Main extends JFrame implements ActionListener{
 
 		return panel;		
 	}
-
-	/**
-	 * 
-	 * @param s
-	 */
-	private static void writeToOutputBox(String s) {
-		box.setText(s);
-	}
-
-
+	
+	
 	private void listBorrowers() {
-		String borrowerList = TransactionManager.listBorrowers();
-		writeToOutputBox(borrowerList);
+		try {
+			String borrowerList = TransactionManager.listBorrowers();
+			writeToOutputBox(borrowerList);
+		} catch (TransactionException e) {
+			makeErrorAlert(e.getMessage());
+		}
 	}
 
 
@@ -234,10 +230,10 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == ADD_BORROWER_NAME)
 			addBorrower();
-
+		
 		if(e.getActionCommand() == LIST_BORROWERS)
 			listBorrowers();
-
+		
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
 
@@ -307,8 +303,8 @@ public class Main extends JFrame implements ActionListener{
 			expiryDate = properties[7];
 			type = properties[8];
 
-
-			if (VerifyAttributes.verifyBID(bid) != null) {
+			
+		/*	if (VerifyAttributes.verifyBID(bid) != null) {
 				makeErrorAlert(VerifyAttributes.verifyBID(bid));
 			} 
 			else if (VerifyAttributes.verifyPassword(password) != null) {
@@ -328,8 +324,8 @@ public class Main extends JFrame implements ActionListener{
 			} 
 			else if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
 				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
-			} 
-			else if (VerifyAttributes.verifyDate(expiryDate) != null) {
+			} */
+			if (VerifyAttributes.verifyDate(expiryDate) != null) {
 				makeErrorAlert(VerifyAttributes.verifyDate(expiryDate));
 			} 
 			else if (VerifyAttributes.verifyType(type) != null) {
@@ -362,10 +358,6 @@ public class Main extends JFrame implements ActionListener{
 		// Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 		String[] borid;
 		String bid;
-		String[] callNumber;
-		String[] copyNo;
-		String outDate;
-		String inDate;
 
 
 		int n = 0;
@@ -408,28 +400,10 @@ public class Main extends JFrame implements ActionListener{
 
 		borid = new String[n];
 		bid =  properties[0];
-		callNumber = new String[n];
-		copyNo = new String[n];
-		//outDate = ;
-		//inDate = ;
-
+		
 		//TODO: verify correct input
-		//TODO: get remaining tuple values
-
-		try {
-			TransactionManager.verifyBorrower(bid);
-		} catch (TransactionException e) {
-			makeErrorAlert(e.getMessage());
-		}
-
-		String [] callNumberList = new String[properties.length -1];
-		for (int i = 1; i <=n; i++) {
-			callNumberList[i - 1] = properties[i];
-		}
-		TransactionManager.checkAvailability(callNumberList);
-
-		//TODO: add to database
-		//TODO: output result
+		
+		TransactionHelper.checkout(properties, bid);
 
 	}
 
@@ -597,52 +571,24 @@ public class Main extends JFrame implements ActionListener{
 		String publisher;
 		String year;
 
-		String memory[] = null;
+		String[] properties = {"Call #", "ISBN", "Title", "Main Author", "Publisher", "Year"};
 
-		while(true){
+		properties = createInputPopup(properties, "Add new book", null);
 
-			String[] properties = {"Call #", "ISBN", "Title", "Main Author", "Publisher", "Year"};
-
-			properties = createInputPopup(properties, "Add new book", memory);
-
-			if (properties == null) {
-				return;
-			}
-
-			memory = properties;
-
-			callNumber = properties[0];
-			isbn = properties[1];
-			title = properties[2];
-			mainAuthor = properties[3];
-			publisher = properties[4];
-			year = properties[5];
-
-			if (VerifyAttributes.verifyCallNumber(callNumber, year) != null) {
-				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber, year));
-			} 
-			else if (VerifyAttributes.verifyISBN(isbn) != null) {
-				makeErrorAlert(VerifyAttributes.verifyISBN(isbn));
-			} 
-			else if (VerifyAttributes.verifyTitle(title) != null) {
-				makeErrorAlert(VerifyAttributes.verifyTitle(title));
-			} 
-			else if (VerifyAttributes.verifyMainAuthor(mainAuthor) != null) {
-				makeErrorAlert(VerifyAttributes.verifyMainAuthor(mainAuthor));
-			} 
-			else if (VerifyAttributes.verifyPublisher(publisher) != null) {
-				makeErrorAlert(VerifyAttributes.verifyPublisher(publisher));
-			} 
-			else if (VerifyAttributes.verifyYear(year) != null) {
-				makeErrorAlert(VerifyAttributes.verifyYear(year));
-			} 
-			else 
-				break;
-			
+		if (properties == null) {
+			return;
 		}
 
-		
-		//TODO: validate author/subject
+		callNumber = properties[0];
+		isbn = properties[1];
+		title = properties[2];
+		mainAuthor = properties[3];
+		publisher = properties[4];
+		year = properties[5];
+
+		//TODO: verify correct input
+
+
 		boolean addAuthor;
 		int result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
 				"Additional Author", JOptionPane.YES_NO_OPTION,
@@ -794,21 +740,28 @@ public class Main extends JFrame implements ActionListener{
 
 		return input;
 	}
-
+	
 	/**
 	 * Make a popup window with an error message
 	 * @param message
 	 */
-	private void makeErrorAlert(String message) {
+	public static void makeErrorAlert(String message) {
 		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
-
+	
 	/**
 	 * Make a popup window with an success message
 	 * @param message
 	 */
-	private void makeSuccessAlert(String message) {
+	public static void makeSuccessAlert(String message) {
 		JOptionPane.showMessageDialog(null, message, "Success", JOptionPane.INFORMATION_MESSAGE);
 	}
 
+	/**
+	 * Write output string to output text box
+	 * @param s
+	 */
+	public static void writeToOutputBox(String s) {
+		box.setText(s);
+	}
 }
