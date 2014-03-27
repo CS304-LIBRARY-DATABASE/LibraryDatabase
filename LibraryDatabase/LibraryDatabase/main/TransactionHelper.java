@@ -23,11 +23,16 @@ public class TransactionHelper {
 				}
 			} catch (TransactionException e) {
 				Main.makeErrorAlert(e.getMessage());
+				e.printStackTrace();
 				return;
 			}
 		}
 		
 		// output result
-		Main.writeToOutputBox(result);
+		if (result.isEmpty()) {
+			Main.writeToOutputBox("None of the requested books are available");
+		} else { 
+			Main.writeToOutputBox(result);
+		}
 	}
 }

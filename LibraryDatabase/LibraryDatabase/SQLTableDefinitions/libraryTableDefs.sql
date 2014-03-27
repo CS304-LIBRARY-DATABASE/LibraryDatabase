@@ -38,9 +38,9 @@ create table Borrower
    
 create table Book 
    (callNumber char(20) not null primary key,
-   isbn  varchar(13) null,
-   title varchar(30) null,
-   mainAuthor varchar(40) null,
+   isbn  varchar(13) not null unique,
+   title varchar(30) not null,
+   mainAuthor varchar(40) not null,
    publisher varchar(40) null,
    year int);
 

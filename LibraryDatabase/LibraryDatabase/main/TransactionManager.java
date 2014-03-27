@@ -123,7 +123,8 @@ public class TransactionManager {
 		      result += rs.getString(9) + " |\n";
 		  }
 	 
-		  rs.close();
+		  // close the statement; 
+		  // the ResultSet will also be closed
 		  stmt.close();
 		} catch (SQLException e) {
 			throw new TransactionException("Error: " + e.getMessage());
@@ -138,16 +139,14 @@ public class TransactionManager {
 	 * @return
 	 */
 	public static String verifyBorrower(String bid) throws TransactionException {
+		Statement  stmt;
 		ResultSet  rs;
 		String type = null;
 		try {
-			
-			// check if borrower is valid
 		  Connection con = DbConnection.getJDBCConnection();
-		  PreparedStatement ps = con.prepareStatement("SELECT * FROM Borrower b where b.bid = '" + bid + "'");
-		  //ps.setString(1, bid);
-		  
-		  rs = ps.executeQuery();
+		  stmt = con.createStatement();
+
+		  rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'", stmt);
 		  
 		  if (rs.next()) {
 			  type = rs.getString(9);
@@ -163,14 +162,9 @@ public class TransactionManager {
 			  throw new TransactionException("Borrower with bid " + bid + " does not exist");
 		  }
 		  
-		  ps.close();
-		  rs.close();
-		  ps = con.prepareStatement("SELECT callNumber, copyNo, amount"
+		  rs = executeQuery("SELECT callNumber, copyNo, amount"
 		  		+ " FROM Borrower natural join Borrowing natural join Fine"
-		  		+ " where bid = ? and paidDate is null");
-		  ps.setString(1, bid);
-		  rs = ps.executeQuery();
-		  
+		  		+ " where bid = '" + bid + "' and paidDate is null", stmt);
 		  String error = "";
 		  int i=0;
 		  while (rs.next()) {
@@ -186,8 +180,10 @@ public class TransactionManager {
 		  if (!error.isEmpty()) {
 			  throw new TransactionException(error);
 		  }
-		  ps.close();
-		  rs.close();
+	 
+		  // close the statement; 
+		  // the ResultSet will also be closed
+		  stmt.close();
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
 		}
@@ -202,22 +198,23 @@ public class TransactionManager {
 	 * @throws TransactionException
 	 */
 	public static String checkAvailability(String callNumber) throws TransactionException {
+		Statement  stmt;
+		ResultSet  rs;
+		   
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  
-		  String result = null;
-		  PreparedStatement ps = con.prepareStatement("SELECT copyNo FROM BookCopy b "
-		  		+ "where b.callNumber = ? and b.status is ?");
-		  ps.setString(1, callNumber);
-		  ps.setString(2, "in");
+		  stmt = con.createStatement();
 		  
-		  ResultSet rs = ps.executeQuery();
+		  String result = null;
+		  
+		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
+		  		+ "where b.callNumber = '" + callNumber + "' and b.status = 'in'", stmt);
 		  
 		  if (rs.next()) {
 			  result = rs.getString(1);
 		  }
-		  ps.close();
-		  rs.close();
+		  stmt.close();
 		  return result;
 		  
 		} catch (SQLException ex) {
@@ -231,10 +228,8 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		String result = "| callNumber | copyNo | inDate |\n";
 		try {
-			ps = con.prepareStatement("Update BookCopy set status = ?"
-					+ " where callNumber = ?");
-			ps.setString(1, "out");
-			ps.setString(2, callNumber);
+			ps = con.prepareStatement("Update BookCopy set status = 'out'"
+					+ " where callNumber = '" + callNumber + "'");
 			executeUpdate(ps, con);
 			
 			ps = con.prepareStatement("Insert into Borrowing values (?,?,?,?,?,?)");
