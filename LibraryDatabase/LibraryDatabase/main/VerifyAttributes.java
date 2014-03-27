@@ -1,8 +1,11 @@
 package main;
 
 import java.sql.Date;
+import java.util.Calendar;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
 
 public class VerifyAttributes {
 
@@ -21,6 +24,8 @@ public class VerifyAttributes {
 	
 	private static final String ISBN_PATTERN = "^\\d{9}[\\d|X]$";
 	private static Pattern ISBNPattern = Pattern.compile(ISBN_PATTERN);
+	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
 
 
@@ -156,44 +161,27 @@ public class VerifyAttributes {
 	public static String verifyDate(String s) {
 		if(isEmpty(s))
 			return ERROR_PATTERN + "Date field is empty";
-
-		String [] split = s.split("/");
-
-		if (split.length != 3) {
-			split = s.split(" ");
-			if (split.length != 3) {
-				return ERROR_PATTERN + "Date must be in the form \"DY MT YR\"";
-			}
-		}
-
-		if(!verifyInteger(split[0]) || !verifyInteger(split[1]) || !verifyInteger(split[2]))
-			return ERROR_PATTERN + "Date must only contain numbers";
-
-
-		@SuppressWarnings("deprecation")
-		java.util.Date date = new Date(100 + Integer.valueOf(split[2]),
-				Integer.valueOf(split[1]) - 1, Integer.valueOf(split[0]) - 1);
-
-
-		if(date.before(new java.util.Date()))
-			return ERROR_PATTERN + "Date cannot be before today's date. Check that it is in the form \"DY MT YR\"";
-
+		
+		try{
+        	java.util.Date date = stringToDate(s);
+        	java.util.Date today = new java.util.Date();
+        	
+        	if(date.before(today)){
+        		return "Date " + sdf.format(date) + " must be after today";
+        	}
+        	
+	    } catch(ParseException e ) {
+	    	return ERROR_PATTERN + "Date must be in the form DD/MM/YYYY";
+	    }
 		return null;
 	}
-
-	@SuppressWarnings("deprecation")
-	public static Date parseDate(String s) {
-		String [] split = s.split("/");
-		if (split.length != 3) {
-			split = s.split(" ");
-			if (split.length != 3) {
-				return null;
-			}
-		}
-		return new Date(Integer.parseInt(split[0]), Integer.parseInt(split[1]), Integer.parseInt(split[2]));
+	
+	public static java.util.Date stringToDate(String s) throws ParseException {
+    	return sdf.parse(s);
 	}
 
-	public static String verifyCallNumber(String callNumber, String year) {
+
+	public static String verifyCallNumber(String callNumber) {
 		//QA76.73 J38 2004
 		//primary number, secondary number, book's year
 		
@@ -205,10 +193,11 @@ public class VerifyAttributes {
 		if (split.length != 3) 
 			return ERROR_PATTERN + "Call number must have primary number, secondary number and year separated by spaces";
 
+		String year = split[2];
 		if(isEmpty(year))
 			return ERROR_PATTERN + "Need to know year to verify call number";
 		
-		if (!split[2].equals(year) || !verifyInteger(split[2]))
+		if (!verifyInteger(split[2]))
 			return ERROR_PATTERN + "Call number must contain correct year at the end";
 		
 		if(callNumber.length() > 20)
@@ -262,7 +251,16 @@ public class VerifyAttributes {
 		return null;
 	}
 
-	public static String verifyYear(String year) {
+	/**
+	 * Constraint:
+	 * 0: no constraints, year can be any 4 digit number
+	 * 1: year must be current year or later
+	 * 2: year must be current year or earlier
+	 * @param year
+	 * @param constraint
+	 * @return
+	 */
+	public static String verifyYear(String year, int constraint) {
 		
 		if(isEmpty(year))
 			return ERROR_PATTERN + "Year field is empty";
@@ -270,8 +268,11 @@ public class VerifyAttributes {
 		if(year.length() != 4 || !verifyInteger(year))
 			return ERROR_PATTERN + "Year must be 4 digits";
 				
-		if(year.compareTo("2014") > 0)
+		if(constraint == 2 && year.compareTo("" + new java.util.Date().getYear()) > 0)
 			return ERROR_PATTERN + "Year must not be in the future!";
+		
+		if(constraint == 1 && year.compareTo("" + new java.util.Date().getYear()) < 0)
+			return ERROR_PATTERN + "Year must not be in the past";
 		
 		return null;
 	}

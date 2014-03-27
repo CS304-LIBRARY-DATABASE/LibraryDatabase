@@ -285,7 +285,7 @@ public class Main extends JFrame implements ActionListener{
 		String memory[] = null;
 
 		while (true) {
-			String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry", "Type"};
+			String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry (DD/MM/YYYY)", "Type"};
 			properties = createInputPopup(properties, "Add new borrower", memory);
 
 			if (properties == null)
@@ -302,9 +302,8 @@ public class Main extends JFrame implements ActionListener{
 			sinOrStNo = properties[6];
 			expiryDate = properties[7];
 			type = properties[8];
-
 			
-		/*	if (VerifyAttributes.verifyBID(bid) != null) {
+			if (VerifyAttributes.verifyBID(bid) != null) {
 				makeErrorAlert(VerifyAttributes.verifyBID(bid));
 			} 
 			else if (VerifyAttributes.verifyPassword(password) != null) {
@@ -324,8 +323,8 @@ public class Main extends JFrame implements ActionListener{
 			} 
 			else if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
 				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
-			} */
-			if (VerifyAttributes.verifyDate(expiryDate) != null) {
+			}
+			else if (VerifyAttributes.verifyDate(expiryDate) != null) {
 				makeErrorAlert(VerifyAttributes.verifyDate(expiryDate));
 			} 
 			else if (VerifyAttributes.verifyType(type) != null) {
@@ -355,19 +354,11 @@ public class Main extends JFrame implements ActionListener{
 	items and their due day (which is given to the borrower).
 	 */
 	private void checkOut() {
-		// Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
-		String[] borid;
-		String bid;
-
-
 		int n = 0;
-
 		while(true){
 			String numItems = JOptionPane.showInputDialog("How many items are being checked out?");
-
 			if(numItems == null)
 				return;
-
 			try{
 				n = Integer.valueOf(numItems);
 
@@ -375,13 +366,10 @@ public class Main extends JFrame implements ActionListener{
 					JOptionPane.showMessageDialog(null, "Please enter a value greater than 0.", "Error", JOptionPane.ERROR_MESSAGE);
 					continue;
 				}
-
-
 				if(n > 10){
 					JOptionPane.showMessageDialog(null, "Please enter only 10 at a time.", "Error", JOptionPane.ERROR_MESSAGE);
 					n = 10;
 				}
-
 				break;
 			}
 			catch (Exception e){
@@ -389,22 +377,42 @@ public class Main extends JFrame implements ActionListener{
 			}
 		}
 
-
 		String[] properties = new String[1 + n];
 		properties[0] = "Borrower ID";
 
-		for(int i = 1; i <= n; i++)
+		for(int i = 1; i <= n; i++) {
 			properties[i] = "Callnumber #" + String.valueOf(i);
-
-		properties = createInputPopup(properties, "Check out " + String.valueOf(n) + " books", null);
-
-		borid = new String[n];
-		bid =  properties[0];
+		}
 		
-		//TODO: verify correct input
-		
-		TransactionHelper.checkout(properties, bid);
+		String [] memory = null;
+		while (true) {
+			memory = createInputPopup(properties, "Check out " + String.valueOf(n) + " books", memory);
 
+			if (memory == null)
+				return;
+			
+			// verify bid
+			String bid =  memory[0];
+			if (VerifyAttributes.verifyBID(bid) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			}
+			else {
+				// verify callnumbers
+				boolean valid = true;
+				for(int i = 1; i <= n; i++) {
+					if (VerifyAttributes.verifyCallNumber(memory[i]) != null) {
+						makeErrorAlert(VerifyAttributes.verifyCallNumber(memory[i]));
+						valid = false;
+						break;
+					}
+				}
+				if (valid) {
+					// checkout books
+					TransactionHelper.checkout(properties, bid);
+					break;
+				}
+			}
+		}
 	}
 
 

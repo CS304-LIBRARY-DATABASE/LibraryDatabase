@@ -9,6 +9,7 @@ public class TransactionHelper {
 			type = TransactionManager.verifyBorrower(bid);
 		} catch (TransactionException e) {
 			Main.makeErrorAlert(e.getMessage());
+			e.printStackTrace();
 			return;
 		}
 		

@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
@@ -48,8 +49,6 @@ public class TransactionManager {
 	
 	private static ResultSet executeQuery(String query, Statement stmt) throws TransactionException {
 		try {
-		  Connection con = DbConnection.getJDBCConnection();
-
 		  return stmt.executeQuery(query);
 		  
 		} catch (SQLException e) {
@@ -76,12 +75,14 @@ public class TransactionManager {
 			ps.setString(5, VerifyAttributes.parsePhoneNumber(attributes[4]));
 			ps.setString(6, attributes[5]);
 			ps.setString(7, attributes[6]);
-			ps.setDate(8, VerifyAttributes.parseDate(attributes[7]));
+			
+			java.util.Date d = VerifyAttributes.stringToDate(attributes[7]);
+			ps.setDate(8, new Date(d.getYear(), d.getMonth(), d.getDay()));
 			ps.setString(9, attributes[8].toLowerCase());
 			
 			executeUpdate(ps, con);
 		
-		} catch (SQLException e) {
+		} catch (SQLException | ParseException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
 //		    try  {
@@ -122,8 +123,7 @@ public class TransactionManager {
 		      result += rs.getString(9) + " |\n";
 		  }
 	 
-		  // close the statement; 
-		  // the ResultSet will also be closed
+		  rs.close();
 		  stmt.close();
 		} catch (SQLException e) {
 			throw new TransactionException("Error: " + e.getMessage());
@@ -138,14 +138,16 @@ public class TransactionManager {
 	 * @return
 	 */
 	public static String verifyBorrower(String bid) throws TransactionException {
-		Statement  stmt;
 		ResultSet  rs;
 		String type = null;
 		try {
+			
+			// check if borrower is valid
 		  Connection con = DbConnection.getJDBCConnection();
-		  stmt = con.createStatement();
-
-		  rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'", stmt);
+		  PreparedStatement ps = con.prepareStatement("SELECT * FROM Borrower b where b.bid = '" + bid + "'");
+		  //ps.setString(1, bid);
+		  
+		  rs = ps.executeQuery();
 		  
 		  if (rs.next()) {
 			  type = rs.getString(9);
@@ -161,9 +163,14 @@ public class TransactionManager {
 			  throw new TransactionException("Borrower with bid " + bid + " does not exist");
 		  }
 		  
-		  rs = executeQuery("SELECT bw.callNumber, bw.copyNo, f.amount"
-		  		+ "FROM Borrower b natural join Borrowing bw natural join Fine f"
-		  		+ " where b.bid = '" + bid + "' and f.paidDate is null", stmt);
+		  ps.close();
+		  rs.close();
+		  ps = con.prepareStatement("SELECT callNumber, copyNo, amount"
+		  		+ " FROM Borrower natural join Borrowing natural join Fine"
+		  		+ " where bid = ? and paidDate is null");
+		  ps.setString(1, bid);
+		  rs = ps.executeQuery();
+		  
 		  String error = "";
 		  int i=0;
 		  while (rs.next()) {
@@ -179,10 +186,8 @@ public class TransactionManager {
 		  if (!error.isEmpty()) {
 			  throw new TransactionException(error);
 		  }
-	 
-		  // close the statement; 
-		  // the ResultSet will also be closed
-		  stmt.close();
+		  ps.close();
+		  rs.close();
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
 		}
@@ -197,23 +202,22 @@ public class TransactionManager {
 	 * @throws TransactionException
 	 */
 	public static String checkAvailability(String callNumber) throws TransactionException {
-		Statement  stmt;
-		ResultSet  rs;
-		   
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  
-		  stmt = con.createStatement();
-		  
 		  String result = null;
+		  PreparedStatement ps = con.prepareStatement("SELECT copyNo FROM BookCopy b "
+		  		+ "where b.callNumber = ? and b.status is ?");
+		  ps.setString(1, callNumber);
+		  ps.setString(2, "in");
 		  
-		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
-		  		+ "where b.callNumber = " + callNumber + " and b.status is 'in'", stmt);
+		  ResultSet rs = ps.executeQuery();
 		  
 		  if (rs.next()) {
 			  result = rs.getString(1);
 		  }
-		  stmt.close();
+		  ps.close();
+		  rs.close();
 		  return result;
 		  
 		} catch (SQLException ex) {
@@ -227,8 +231,10 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		String result = "| callNumber | copyNo | inDate |\n";
 		try {
-			ps = con.prepareStatement("Update BookCopy set status = 'out'"
-					+ " where callNumber = '" + callNumber + "'");
+			ps = con.prepareStatement("Update BookCopy set status = ?"
+					+ " where callNumber = ?");
+			ps.setString(1, "out");
+			ps.setString(2, callNumber);
 			executeUpdate(ps, con);
 			
 			ps = con.prepareStatement("Insert into Borrowing values (?,?,?,?,?,?)");
@@ -244,13 +250,13 @@ public class TransactionManager {
 			c.setTime(today); // Now use today date.
 			
 			if (type.equals("borrower") || type.equals("public")) {
-				c.add(Calendar.DATE, 2*7); // Adding 2 weeks
+				c.add(Calendar.DAY_OF_MONTH, 2*7); // Adding 2 weeks
 				inDate = c.getTime();
 			} else if (type.equals("faculty")) {
-				c.add(Calendar.DATE, 12*7); // Adding 12 weeks
+				c.add(Calendar.DAY_OF_MONTH, 12*7); // Adding 12 weeks
 				inDate = c.getTime();
 			} else if (type.equals("staff")) {
-				c.add(Calendar.DATE, 6); // Adding 6 weeks
+				c.add(Calendar.DAY_OF_MONTH, 6*7); // Adding 6 weeks
 				inDate = c.getTime();
 			} else {
 				System.err.println("Error, unexpected borrower type: " + type);
