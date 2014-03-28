@@ -31,7 +31,7 @@ public class Main extends JFrame implements ActionListener{
 	private static final String CHECK_OUT_NAME = "Check Out Items";
 	private static final String RETURN_ITEM_NAME = "Return Item";
 	private static final String CHECK_OVERDUE_NAME = "Check Overdue Items";
-	private static final String LIST_BORROWERS = "List Borrowers";
+	private static final String LIST_TABLE_CONTENTS = "List Table Contents";
 
 
 	public static void main(String[] args)
@@ -108,9 +108,9 @@ public class Main extends JFrame implements ActionListener{
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
 		
-		Button listBorrowers = new Button(LIST_BORROWERS);
-		listBorrowers.addActionListener(app);
-		panel.add(listBorrowers);
+		Button listTableContents = new Button(LIST_TABLE_CONTENTS);
+		listTableContents.addActionListener(app);
+		panel.add(listTableContents);
 
 		Button checkOut = new Button(CHECK_OUT_NAME);
 		checkOut.addActionListener(app);
@@ -214,11 +214,17 @@ public class Main extends JFrame implements ActionListener{
 		return panel;		
 	}
 	
-	
-	private void listBorrowers() {
+	/**
+	 * Dump all entries of given table to text box
+	 */
+	private void listTableContents() {
 		try {
-			String borrowerList = TransactionManager.listBorrowers();
-			writeToOutputBox(borrowerList);
+			String tableName = JOptionPane.showInputDialog("Table Name:");
+			if(tableName == null || tableName.trim().isEmpty())
+				return;
+			String result = TransactionManager.listTableConents(tableName);
+			
+			writeToOutputBox(result);
 		} catch (TransactionException e) {
 			makeErrorAlert(e.getMessage());
 		}
@@ -231,8 +237,8 @@ public class Main extends JFrame implements ActionListener{
 		if(e.getActionCommand() == ADD_BORROWER_NAME)
 			addBorrower();
 		
-		if(e.getActionCommand() == LIST_BORROWERS)
-			listBorrowers();
+		if(e.getActionCommand() == LIST_TABLE_CONTENTS)
+			listTableContents();
 		
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
@@ -408,7 +414,7 @@ public class Main extends JFrame implements ActionListener{
 				}
 				if (valid) {
 					// checkout books
-					TransactionHelper.checkout(properties, bid);
+					TransactionHelper.checkout(memory, bid);
 					break;
 				}
 			}
@@ -579,71 +585,44 @@ public class Main extends JFrame implements ActionListener{
 		String publisher;
 		String year;
 
-		String[] properties = {"Call #", "ISBN", "Title", "Main Author", "Publisher", "Year"};
+		String[] properties = {"Call Number *", "ISBN *", "Title *", "Main Author *", "Publisher *", "Year *",
+				"Additional Author(s) (Comma Separated)", "Subject(s) (Comma Separated)"};
+		String [] memory = null;
 
-		properties = createInputPopup(properties, "Add new book", null);
-
-		if (properties == null) {
-			return;
+		while (true) {
+			memory = createInputPopup(properties, "Add new book", memory);
+	
+			if (memory == null) {
+				return;
+			}
+	
+			callNumber = memory[0];
+			isbn = memory[1];
+			title = memory[2];
+			mainAuthor = memory[3];
+			publisher = memory[4];
+			year = memory[5];
+			String additionalAuthors = memory[6];
+			String subjects = memory[7];
+			
+			if (VerifyAttributes.verifyCallNumber(callNumber) != null) {
+				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber));
+			} else if (VerifyAttributes.verifyISBN(isbn) != null) {
+				makeErrorAlert(VerifyAttributes.verifyISBN(isbn));
+			} else if (VerifyAttributes.verifyTitle(title) != null) {
+				makeErrorAlert(VerifyAttributes.verifyTitle(title));
+			} else if (VerifyAttributes.verifyAuthor(mainAuthor) != null) {
+				makeErrorAlert(VerifyAttributes.verifyAuthor(mainAuthor));
+			} else if (VerifyAttributes.verifyPublisher(publisher) != null) {
+				makeErrorAlert(VerifyAttributes.verifyPublisher(publisher));
+			} else if (VerifyAttributes.verifyYear(year, 2) != null) {
+				makeErrorAlert(VerifyAttributes.verifyYear(year, 2));
+			} else {
+				// Add book to the database
+				TransactionHelper.addBook(memory);
+				break;
+			}
 		}
-
-		callNumber = properties[0];
-		isbn = properties[1];
-		title = properties[2];
-		mainAuthor = properties[3];
-		publisher = properties[4];
-		year = properties[5];
-
-		//TODO: verify correct input
-
-
-		boolean addAuthor;
-		int result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
-				"Additional Author", JOptionPane.YES_NO_OPTION,
-				JOptionPane.QUESTION_MESSAGE, null, null, null);
-
-		addAuthor = (result == 0);
-
-		while(addAuthor){
-			String[] author = {"Name"};
-			author = createInputPopup(author, "Add author to " + title, null);
-
-			//TODO: add author to database
-
-			result = JOptionPane.showOptionDialog(null, "Would you like to add another author?",
-					"Additional Author", JOptionPane.YES_NO_OPTION,
-					JOptionPane.QUESTION_MESSAGE, null, null, null);
-
-			//TODO: handle cancel/close, verify author name isn't empty
-
-			addAuthor = (result == 0);
-
-		}
-
-		boolean addSubject;
-		result = JOptionPane.showOptionDialog(null, "Would you like to a subject?",
-				"Additional Author", JOptionPane.YES_NO_OPTION,
-				JOptionPane.QUESTION_MESSAGE, null, null, null);
-
-		addSubject = (result == 0);
-
-		while(addSubject){
-			String[] author = {"Name"};
-			author = createInputPopup(author, "Add subject to " + title, null);
-
-			//TODO: add subject to database
-
-			result = JOptionPane.showOptionDialog(null, "Would you like to add another subject?",
-					"Additional Author", JOptionPane.YES_NO_OPTION,
-					JOptionPane.QUESTION_MESSAGE, null, null, null);
-
-			//TODO: handle cancel/close, verify subject name isn't empty
-
-			addSubject = (result == 0);
-
-		}
-
-
 	}
 
 	/*

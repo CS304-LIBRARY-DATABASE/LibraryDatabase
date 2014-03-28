@@ -260,6 +260,7 @@ public class VerifyAttributes {
 	 * @param constraint
 	 * @return
 	 */
+	@SuppressWarnings("deprecation")
 	public static String verifyYear(String year, int constraint) {
 		
 		if(isEmpty(year))
@@ -267,13 +268,27 @@ public class VerifyAttributes {
 		
 		if(year.length() != 4 || !verifyInteger(year))
 			return ERROR_PATTERN + "Year must be 4 digits";
-				
-		if(constraint == 2 && year.compareTo("" + new java.util.Date().getYear()) > 0)
+		
+		Calendar today = Calendar.getInstance();
+		Calendar date = Calendar.getInstance();
+		date.set(Integer.parseInt(year), today.getTime().getMonth(), today.getTime().getDate());
+		
+		if(constraint == 2 && date.after(today))
 			return ERROR_PATTERN + "Year must not be in the future!";
 		
-		if(constraint == 1 && year.compareTo("" + new java.util.Date().getYear()) < 0)
+		if(constraint == 1 && date.before(today))
 			return ERROR_PATTERN + "Year must not be in the past";
 		
+		return null;
+	}
+
+	public static String verifyAuthor(String author) {
+		if (isEmpty(author)) {
+			return ERROR_PATTERN + "Author cannot be empty";
+		}
+		if (author.length() > 40) {
+			return ERROR_PATTERN + "Author cannot be longer than 40 characters";
+		}
 		return null;
 	}
 }

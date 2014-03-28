@@ -4,11 +4,14 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 
 
 public class TransactionManager {
@@ -85,13 +88,6 @@ public class TransactionManager {
 		} catch (SQLException | ParseException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
-//		    try  {
-//				ps.cancel();	
-//		    }
-//		    catch (SQLException ex) {
-//				System.out.println("Message: " + ex.getMessage());
-//				System.exit(-1);
-//		    }
 		}
 	}
 	
@@ -99,30 +95,58 @@ public class TransactionManager {
 	 * Select all borrowers in Borrower table and return as String
 	 * @return
 	 */
-	public static String listBorrowers() throws TransactionException {
+	public static String listTableConents(String tableName) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
-		String result = "| bid | PW | Name | Address | Phone | Email | Sin/StNo | ExpDate | Type |\n";
+		String result = "";
 		   
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  stmt = con.createStatement();
 
-		  rs = executeQuery("SELECT * FROM Borrower", stmt);
+		  rs = executeQuery("SELECT * FROM " + tableName, stmt);
+		  
+		  // get info on ResultSet
+		  ResultSetMetaData rsmd = rs.getMetaData();
+		  int numCols = rsmd.getColumnCount();
+		  
+		  int [] columnTypes = new int[numCols];
+		  result += "| ";
+		  // get column names;
+		  for (int i = 0; i < numCols; i++) {
+		      result += rsmd.getColumnName(i+1) + " | ";
+		      columnTypes[i] = rsmd.getColumnType(i+1);
+		  }
+		  result = result.trim() + "\n";
 		  
 		  while(rs.next()) {
 			  result += "| ";
-		      result += rs.getString(1) + " | ";
-		      result += rs.getString(2) + " | ";
-		      result += rs.getString(3) + " | ";
-		      result += rs.getString(4) + " | ";
-		      result += rs.getString(5) + " | ";
-		      result += rs.getString(6) + " | ";
-		      result += rs.getString(7) + " | ";
-		      result += rs.getDate(8) + " | ";
-		      result += rs.getString(9) + " |\n";
+			  for (int i = 0; i < numCols; i++) {
+				  switch (columnTypes[i]) {
+					  case Types.VARCHAR:
+					  case Types.CHAR:
+						  result += rs.getString(i+1) + " | ";
+						  break;
+					  case Types.INTEGER:
+					  case Types.NUMERIC:
+						  result += rs.getInt(i+1) + " | ";
+						  break;
+					  case Types.FLOAT:
+					  case Types.DOUBLE:
+						  result += rs.getDouble(i+1) + " | ";
+						  break;
+					  case Types.DATE:
+						  result += rs.getDate(i+1) + " | ";
+						  break;
+					  default:
+						  throw new TransactionException("Error: unexpected type " +
+								  columnTypes[i] + " encountered in"
+						  		+ " TransactionManager.listTableConents()");
+				  }
+			  }
+			  result = result.trim() + "\n";
 		  }
-	 
+		  
 		  // close the statement; 
 		  // the ResultSet will also be closed
 		  stmt.close();
@@ -161,7 +185,7 @@ public class TransactionManager {
 		  else {
 			  throw new TransactionException("Borrower with bid " + bid + " does not exist");
 		  }
-		  
+		  rs.close();
 		  rs = executeQuery("SELECT callNumber, copyNo, amount"
 		  		+ " FROM Borrower natural join Borrowing natural join Fine"
 		  		+ " where bid = '" + bid + "' and paidDate is null", stmt);
@@ -183,6 +207,7 @@ public class TransactionManager {
 	 
 		  // close the statement; 
 		  // the ResultSet will also be closed
+		  rs.close();
 		  stmt.close();
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
@@ -204,17 +229,23 @@ public class TransactionManager {
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  
-		  stmt = con.createStatement();
+		  //stmt = con.createStatement();
+		  
+		  PreparedStatement ps = con.prepareStatement("SELECT copyNo FROM BookCopy b "
+			  		+ "where b.callNumber = ? and b.status = ?");
+		  ps.setString(1, callNumber);
+		  ps.setString(2, "in");
 		  
 		  String result = null;
-		  
-		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
-		  		+ "where b.callNumber = '" + callNumber + "' and b.status = 'in'", stmt);
-		  
+		  rs = ps.executeQuery();
+//		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
+//		  		+ "where b.callNumber = '" + callNumber + "' and b.status = 'in'", stmt);
 		  if (rs.next()) {
 			  result = rs.getString(1);
 		  }
-		  stmt.close();
+		  ps.close();
+		  rs.close();
+		  //stmt.close();
 		  return result;
 		  
 		} catch (SQLException ex) {
@@ -272,5 +303,130 @@ public class TransactionManager {
 		}
 		
 		return result;
+	}
+
+
+	public static boolean checkIfBookExists(String callNumber) throws TransactionException {
+		Statement  stmt;
+		ResultSet  rs;
+		try {
+		  Connection con = DbConnection.getJDBCConnection();
+		  stmt = con.createStatement();
+		  
+		  boolean result;
+
+		  rs = executeQuery("SELECT * FROM Book b where b.callNumber = '" + callNumber + "'", stmt);
+		  
+		  if (rs.next()) {
+			  result = true;
+		  }
+		  // no borrowers with bid found
+		  else {
+			  result = false;
+		  }
+		  rs.close();
+		  stmt.close();
+		  return result;
+		  
+		} catch (SQLException ex) {
+			throw new TransactionException("Error: " + ex.getMessage());
+		}
+	}
+
+
+	public static void addNewBook(String[] fields) throws TransactionException {
+		String callNumber = fields[0].trim();
+		String isbn = fields[1].trim();
+		String title = fields[2].trim();
+		String mainAuthor = fields[3].trim();
+		String publisher = fields[4].trim();
+		int year = Integer.parseInt(fields[5]);
+		
+		List<String> additionalAuthors = TransactionHelper.getCommaSeparatedVals(fields[6]);
+		List<String> subjects = TransactionHelper.getCommaSeparatedVals(fields[7]);
+		
+		PreparedStatement ps = null;
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			ps = con.prepareStatement("INSERT INTO Book VALUES (?,?,?,?,?,?)");
+			
+			ps.setString(1, callNumber);
+			ps.setString(2, isbn);
+			ps.setString(3, title);
+			ps.setString(4, mainAuthor);
+			ps.setString(5, publisher);
+			ps.setInt(6, year);
+			
+			executeUpdate(ps, con);
+			
+			ps = con.prepareStatement("INSERT INTO BookCopy VALUES (?,?,?)");
+			
+			ps.setString(1, callNumber);
+			ps.setString(2, "C1");
+			ps.setString(3, "in");
+			
+			executeUpdate(ps, con);
+			
+			if (additionalAuthors != null) {
+				for (String author : additionalAuthors) {
+					ps = con.prepareStatement("INSERT INTO HasAuthor VALUES (?,?)");
+					ps.setString(1, callNumber);
+					ps.setString(2, author);
+					executeUpdate(ps, con);
+				}
+			}
+			if (subjects != null) {
+				for (String subject : subjects) {
+					ps = con.prepareStatement("INSERT INTO HasSubject VALUES (?,?)");
+					ps.setString(1, callNumber);
+					ps.setString(2, subject);
+					executeUpdate(ps, con);
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("addBorrower Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+
+
+	public static void addNewBookCopy(String[] fields) throws TransactionException {
+		String callNumber = fields[0].trim();
+		
+		PreparedStatement ps = null;
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			
+			// determine next copy number
+			Statement  stmt = con.createStatement();
+			
+			ResultSet rs = executeQuery("select copyNo from bookcopy where "
+					+ "callnumber='" + callNumber + "' order by copyNo desc", stmt);
+			
+			String existingCopyNum;
+			  
+			if (rs.next()) {
+				existingCopyNum = rs.getString(1);
+				int num = Integer.parseInt(existingCopyNum.trim().substring(1)) + 1;
+				String copyNo = "C" + num;
+				
+				rs.close();
+				stmt.close();
+				
+				ps = con.prepareStatement("INSERT INTO BookCopy VALUES (?,?,?)");
+				
+				ps.setString(1, callNumber);
+				ps.setString(2, copyNo);
+				ps.setString(3, "in");
+				
+				executeUpdate(ps, con);
+			} else {
+				throw new TransactionException("Error: no previous BookCopies found "
+						+ "with callNumber: " + callNumber);
+			}
+		} catch (SQLException e) {
+			System.out.println("addBorrower Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
 	}
 }

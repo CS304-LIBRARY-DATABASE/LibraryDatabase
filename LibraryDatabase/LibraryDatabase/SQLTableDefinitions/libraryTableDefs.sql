@@ -13,14 +13,10 @@ create table BorrowerType
    bookTimeLimit varchar(20) not null,
    primary key (type));
    
-insert into BorrowerType
-values('borrower', '2');
-insert into BorrowerType
-values('faculty', '12');
-insert into BorrowerType
-values('staff', '6');
-insert into BorrowerType
-values('public', '2');
+insert into BorrowerType values('borrower', '2');
+insert into BorrowerType values('faculty', '12');
+insert into BorrowerType values('staff', '6');
+insert into BorrowerType values('public', '2');
  
 
 create table Borrower 
@@ -47,16 +43,18 @@ create table Book
 create table HasAuthor
    (callNumber char(20) not null,
    name varchar(40) not null,
-   primary key (callNumber),
+   primary key (callNumber, name),
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
 create table HasSubject
    (callNumber char(20) not null,
-   subject varchar(40) not null);
+   subject varchar(40) not null,
+   primary key (callNumber, subject),
+   foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
 create table BookCopy
    (callNumber char(20) not null,
-   copyNo char(20) not null,
+   copyNo char(4) not null,
    status varchar(7) null,
    primary key(callNumber, copyNo),
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
@@ -73,7 +71,7 @@ create table Borrowing
    (borid char(20) not null primary key,
    bid char(11) not null,
    callNumber char(20) not null,
-   copyNo char(20) not null,
+   copyNo char(4) not null,
    outDate date null,
    inDate date null,
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,

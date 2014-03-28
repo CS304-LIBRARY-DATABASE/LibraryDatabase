@@ -1,5 +1,8 @@
 package main;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class TransactionHelper {
 
 	public static void checkout(String [] properties, String bid) {
@@ -15,11 +18,12 @@ public class TransactionHelper {
 		
 		String result = "";
 		for (int i = 1; i < properties.length; i++) {
+			String callNumber = properties[i].trim();
 			try {
-				String copyNo = TransactionManager.checkAvailability(properties[i]);
+				String copyNo = TransactionManager.checkAvailability(callNumber);
 				if (copyNo != null) {
 					// this book is available, create a borrowing record in db
-					result += TransactionManager.checkoutBook(properties[i], bid, copyNo, type);
+					result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
 				}
 			} catch (TransactionException e) {
 				Main.makeErrorAlert(e.getMessage());
@@ -34,5 +38,46 @@ public class TransactionHelper {
 		} else { 
 			Main.writeToOutputBox(result);
 		}
+	}
+
+	public static void addBook(String[] fields) {
+		String callNumber = fields[0];
+		
+		// check if the book exists already, in which case only add a new copy
+		try {
+			boolean exists = TransactionManager.checkIfBookExists(callNumber);
+			if (exists) {
+				// add a new copy
+				TransactionManager.addNewBookCopy(fields);
+			} else {
+				// add a new book, and copy C1
+				TransactionManager.addNewBook(fields);
+			}
+		} catch (TransactionException e) {
+			Main.makeErrorAlert(e.getMessage());
+			e.printStackTrace();
+			return;
+		}
+		
+	}
+	
+	public static List<String> getCommaSeparatedVals(String input) {
+		if (input == null)
+			return null;
+		input = input.trim();
+		if (input.isEmpty())
+			return null;
+		
+		String [] arr = input.split(",");
+		List<String> result = new ArrayList<String>();
+		
+		for (int i=0; i < arr.length; i++) {
+			String s = arr[i].trim();
+			if (!s.isEmpty())
+				result.add(s);
+		}
+		if (result.isEmpty())
+			return null;
+		return result;
 	}
 }
