@@ -552,20 +552,31 @@ public class Main extends JFrame implements ActionListener{
 		String bid;
 
 		String[] getInfo = {"Borrower ID"};
-		getInfo = createInputPopup(getInfo, "Validation", null);
-
-		if(getInfo == null)
-			return;
-
-		bid = getInfo[0];
-
-
-		//TODO: check that Borrower ID is good
-		//TODO: query for fine tuples
-		//TODO: get user to pay fine
-
-
-
+		String [] memory = null;
+		while (true) {
+			memory = createInputPopup(getInfo, "Validation", memory);
+			if(memory == null)
+				return;
+	
+			bid = memory[0];
+			if (VerifyAttributes.verifyBID(bid) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			} else {
+				// update unpaid fine tuples
+				try {
+					if (TransactionManager.hasFines(bid)) {
+						TransactionHelper.payFine(bid);
+						makeSuccessAlert("Fine successfully payed");
+					} else {
+						makeSuccessAlert("Borrower " + bid + " has no outstanding fines");
+					}
+				} catch (TransactionException e) {
+					makeErrorAlert(e.getMessage());
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
 	}
 
 	/*
@@ -620,6 +631,7 @@ public class Main extends JFrame implements ActionListener{
 			} else {
 				// Add book to the database
 				TransactionHelper.addBook(memory);
+				makeSuccessAlert("Book successfully added");
 				break;
 			}
 		}

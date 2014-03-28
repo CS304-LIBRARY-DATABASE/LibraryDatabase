@@ -16,8 +16,6 @@ import java.util.List;
 
 public class TransactionManager {
 	
-	private static long borrowingID = 0;
-	
 	/**
 	 * Execute Insert, Update, or Delete statements
 	 * @param ps
@@ -231,6 +229,7 @@ public class TransactionManager {
 		  
 		  //stmt = con.createStatement();
 		  
+		  // TODO MAKE THIS QUERY WORK
 		  PreparedStatement ps = con.prepareStatement("SELECT copyNo FROM BookCopy b "
 			  		+ "where b.callNumber = ? and b.status = ?");
 		  ps.setString(1, callNumber);
@@ -241,6 +240,7 @@ public class TransactionManager {
 //		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
 //		  		+ "where b.callNumber = '" + callNumber + "' and b.status = 'in'", stmt);
 		  if (rs.next()) {
+			  // FIXME control flow never reached this statement!
 			  result = rs.getString(1);
 		  }
 		  ps.close();
@@ -426,6 +426,52 @@ public class TransactionManager {
 			}
 		} catch (SQLException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+
+
+	public static void payFine(String bid) throws TransactionException {
+		PreparedStatement ps = null;
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			ps = con.prepareStatement("Update Fine set paidDate = ? where fid in (select fid "
+					+ "from Borrowing natural join Fine "
+					+ "where bid = '" + bid + "' and paidDate is null)");
+			
+			java.util.Date today = new java.util.Date();
+			ps.setDate(1, new Date(today.getYear(), today.getMonth(), today.getDay()));
+			
+			executeUpdate(ps, con);
+		
+		} catch (SQLException e) {
+			System.out.println("payFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+	
+	
+	public static boolean hasFines(String bid) throws TransactionException {
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			Statement  stmt = con.createStatement();
+			
+			ResultSet rs = executeQuery("select callnumber, copyNo, outDate, inDate, "
+					+ "fid, amount "
+					+ "from Borrowing natural join Fine "
+					+ "where bid = '" + bid + "' and paidDate is null", stmt);
+			
+			boolean finesExist = false;
+			if (rs.next()) {
+				finesExist = true;
+			}
+			
+			rs.close();
+			stmt.close();
+			return finesExist;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
 		}
 	}

@@ -80,4 +80,8 @@ public class TransactionHelper {
 			return null;
 		return result;
 	}
+
+	public static void payFine(String bid) throws TransactionException {
+		TransactionManager.payFine(bid);
+	}
 }

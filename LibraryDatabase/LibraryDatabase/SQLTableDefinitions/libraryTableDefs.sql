@@ -66,14 +66,22 @@ create table HoldRequest
    issuedDate date,
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
-                         
+            
+                
+CREATE SEQUENCE borid_sequence
+MINVALUE 1
+START WITH 1
+INCREMENT BY 1
+CACHE 10
+         
 create table Borrowing
-   (borid char(20) not null primary key,
+   (borid int not null,
    bid char(11) not null,
    callNumber char(20) not null,
    copyNo char(4) not null,
    outDate date null,
    inDate date null,
+   primary key (borid),
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber, copyNo) references BookCopy(callNumber, copyNo) ON DELETE CASCADE);
                        
@@ -82,6 +90,6 @@ create table Fine
    amount float,
    issuedDate date,
    paidDate date,
-   borid char(20) not null,
+   borid int not null unique,
    foreign key (borid) references Borrowing(borid) ON DELETE CASCADE);
 
