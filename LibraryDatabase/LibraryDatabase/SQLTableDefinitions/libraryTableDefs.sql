@@ -18,15 +18,20 @@ insert into BorrowerType values('faculty', '12');
 insert into BorrowerType values('staff', '6');
 insert into BorrowerType values('public', '2');
  
+CREATE SEQUENCE bid_sequence
+MINVALUE 1
+START WITH 1
+INCREMENT BY 1
+CACHE 10
 
 create table Borrower 
-   (bid char(11) not null,
+   (bid int not null,
    password char(16) not null, 
    name char(11) not null,
    address varchar(40) null,
    phone varchar(15) null,
    emailAddress varchar(40) null,
-   sinOrStNo char(9) not null,
+   sinOrStNo char(9) not null unique,
    expiryDate date not null,
    type varchar(20) not null,
    primary key (bid),
@@ -59,9 +64,15 @@ create table BookCopy
    primary key(callNumber, copyNo),
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
+CREATE SEQUENCE hid_sequence
+MINVALUE 1
+START WITH 1
+INCREMENT BY 1
+CACHE 10
+
 create table HoldRequest
-   (hid char(20) not null primary key,
-   bid char(11) not null,
+   (hid int not null primary key,
+   bid int not null,
    callNumber char(20) not null,
    issuedDate date,
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
@@ -76,7 +87,7 @@ CACHE 10
          
 create table Borrowing
    (borid int not null,
-   bid char(11) not null,
+   bid int not null,
    callNumber char(20) not null,
    copyNo char(4) not null,
    outDate date null,
@@ -84,9 +95,15 @@ create table Borrowing
    primary key (borid),
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber, copyNo) references BookCopy(callNumber, copyNo) ON DELETE CASCADE);
+   
+CREATE SEQUENCE fid_sequence
+MINVALUE 1
+START WITH 1
+INCREMENT BY 1
+CACHE 10
                        
 create table Fine
-   (fid char(20) not null primary key,
+   (fid int not null primary key,
    amount float,
    issuedDate date,
    paidDate date,

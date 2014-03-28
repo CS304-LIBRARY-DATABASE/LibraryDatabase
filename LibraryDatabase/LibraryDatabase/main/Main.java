@@ -32,7 +32,7 @@ public class Main extends JFrame implements ActionListener{
 	private static final String RETURN_ITEM_NAME = "Return Item";
 	private static final String CHECK_OVERDUE_NAME = "Check Overdue Items";
 	private static final String LIST_TABLE_CONTENTS = "List Table Contents";
-
+	private static final String EXECUTE_QUERY = "Execute Query";
 
 	public static void main(String[] args)
 	{
@@ -111,7 +111,11 @@ public class Main extends JFrame implements ActionListener{
 		Button listTableContents = new Button(LIST_TABLE_CONTENTS);
 		listTableContents.addActionListener(app);
 		panel.add(listTableContents);
-
+		
+		Button queryButton = new Button(EXECUTE_QUERY);
+		queryButton.addActionListener(app);
+		panel.add(queryButton);
+		
 		Button checkOut = new Button(CHECK_OUT_NAME);
 		checkOut.addActionListener(app);
 		panel.add(checkOut);
@@ -240,6 +244,9 @@ public class Main extends JFrame implements ActionListener{
 		if(e.getActionCommand() == LIST_TABLE_CONTENTS)
 			listTableContents();
 		
+		if(e.getActionCommand() == EXECUTE_QUERY)
+			executeQuery();
+		
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
 
@@ -273,12 +280,35 @@ public class Main extends JFrame implements ActionListener{
 	}
 
 
+	private void executeQuery() {
+		String[] properties = new String[1];
+		properties[0] = "Raw Query String:";
+		
+		String [] memory = null;
+		while (true) {
+			memory = createInputPopup(properties, "Raw Query String:", memory);
+			if (memory == null)
+				return;
+			
+			String query = memory[0].trim();
+			if (!query.isEmpty()) {
+				try {
+					TransactionManager.executeQuery(query);
+					makeSuccessAlert("Query successful");
+					break;
+				} catch (TransactionException e) {
+					makeErrorAlert(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
 	/* 
 	 * Add a new borrower to the library. The user should provide all the required information
 	 */
 	private void addBorrower() {
 		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
-		String bid;
 		String password;
 		String name;
 		String address;
@@ -289,30 +319,25 @@ public class Main extends JFrame implements ActionListener{
 		String type;
 
 		String memory[] = null;
+		String[] properties = {"Password", "Name", "Address", "Phone", "Email",
+				"SIN/S.Num", "Expiry (DD/MM/YYYY)", "Type"};
 
 		while (true) {
-			String[] properties = {"ID", "Password", "Name", "Address", "Phone", "Email", "SIN/S.Num", "Expiry (DD/MM/YYYY)", "Type"};
-			properties = createInputPopup(properties, "Add new borrower", memory);
+			memory = createInputPopup(properties, "Add new borrower", memory);
 
-			if (properties == null)
+			if (memory == null)
 				return;
 
-			memory = properties;
-
-			bid = properties[0];
-			password = properties[1];
-			name = properties[2];
-			address = properties[3];
-			phone = properties[4];
-			emailAddress = properties[5];
-			sinOrStNo = properties[6];
-			expiryDate = properties[7];
-			type = properties[8];
+			password = memory[0];
+			name = memory[1];
+			address = memory[2];
+			phone = memory[3];
+			emailAddress = memory[4];
+			sinOrStNo = memory[5];
+			expiryDate = memory[6];
+			type = memory[7];
 			
-			if (VerifyAttributes.verifyBID(bid) != null) {
-				makeErrorAlert(VerifyAttributes.verifyBID(bid));
-			} 
-			else if (VerifyAttributes.verifyPassword(password) != null) {
+			if (VerifyAttributes.verifyPassword(password) != null) {
 				makeErrorAlert(VerifyAttributes.verifyPassword(password));
 			} 
 			else if (VerifyAttributes.verifyBorrowerName(name) != null) {
@@ -340,11 +365,12 @@ public class Main extends JFrame implements ActionListener{
 				// add borrower with given properties
 
 				try{
-					TransactionManager.addBorrower(properties);
+					TransactionManager.addBorrower(memory);
 					makeSuccessAlert("Borrower successfully added");
 				}
 				catch(TransactionException e){
 					makeErrorAlert(e.getMessage());
+					e.printStackTrace();
 				}
 
 				break;
@@ -384,7 +410,7 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 		String[] properties = new String[1 + n];
-		properties[0] = "Borrower ID";
+		properties[0] = "sinOrStNo:";
 
 		for(int i = 1; i <= n; i++) {
 			properties[i] = "Callnumber #" + String.valueOf(i);
@@ -397,10 +423,10 @@ public class Main extends JFrame implements ActionListener{
 			if (memory == null)
 				return;
 			
-			// verify bid
-			String bid =  memory[0];
-			if (VerifyAttributes.verifyBID(bid) != null) {
-				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			// verify borrower
+			String sinOrStNo =  memory[0];
+			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
 			}
 			else {
 				// verify callnumbers
@@ -414,7 +440,7 @@ public class Main extends JFrame implements ActionListener{
 				}
 				if (valid) {
 					// checkout books
-					TransactionHelper.checkout(memory, bid);
+					TransactionHelper.checkout(memory, sinOrStNo);
 					break;
 				}
 			}
@@ -549,26 +575,27 @@ public class Main extends JFrame implements ActionListener{
 	private void payFine() {
 		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
 
-		String bid;
+		String sinOrStNo;
 
-		String[] getInfo = {"Borrower ID"};
+		String[] getInfo = {"Sin/Student Number:"};
 		String [] memory = null;
 		while (true) {
 			memory = createInputPopup(getInfo, "Validation", memory);
 			if(memory == null)
 				return;
 	
-			bid = memory[0];
-			if (VerifyAttributes.verifyBID(bid) != null) {
-				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			sinOrStNo = memory[0];
+			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
 			} else {
 				// update unpaid fine tuples
 				try {
-					if (TransactionManager.hasFines(bid)) {
-						TransactionHelper.payFine(bid);
+					if (TransactionManager.hasFines(sinOrStNo)) {
+						TransactionHelper.payFine(sinOrStNo);
 						makeSuccessAlert("Fine successfully payed");
 					} else {
-						makeSuccessAlert("Borrower " + bid + " has no outstanding fines");
+						makeSuccessAlert("Borrower with Sin/Student Number " + sinOrStNo + " "
+								+ "has no outstanding fines");
 					}
 				} catch (TransactionException e) {
 					makeErrorAlert(e.getMessage());

@@ -58,6 +58,18 @@ public class TransactionManager {
 		}
 	}
 	
+	public static void executeQuery(String query) throws TransactionException  {
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			PreparedStatement ps = con.prepareStatement(query);
+			executeUpdate(ps, con);
+			  
+			} catch (SQLException e) {
+				System.out.println("Message: " + e.getMessage());
+				throw new TransactionException(e.getMessage());
+			}
+	}
+	
 	/**
 	 * Add a new borrower to Borrower Table
 	 * @param attributes
@@ -67,19 +79,18 @@ public class TransactionManager {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
-			ps = con.prepareStatement("INSERT INTO Borrower VALUES (?,?,?,?,?,?,?,?,?)");
+			ps = con.prepareStatement("INSERT INTO Borrower VALUES (bid_sequence.nextval,?,?,?,?,?,?,?,?)");
 			
 			ps.setString(1, attributes[0]);
 			ps.setString(2, attributes[1]);
 			ps.setString(3, attributes[2]);
-			ps.setString(4, attributes[3]);
-			ps.setString(5, VerifyAttributes.parsePhoneNumber(attributes[4]));
+			ps.setString(4, VerifyAttributes.parsePhoneNumber(attributes[3]));
+			ps.setString(5, attributes[4]);
 			ps.setString(6, attributes[5]);
-			ps.setString(7, attributes[6]);
 			
-			java.util.Date d = VerifyAttributes.stringToDate(attributes[7]);
-			ps.setDate(8, new Date(d.getYear(), d.getMonth(), d.getDay()));
-			ps.setString(9, attributes[8].toLowerCase());
+			java.util.Date d = VerifyAttributes.stringToDate(attributes[6]);
+			ps.setDate(7, new Date(d.getYear(), d.getMonth(), d.getDay()));
+			ps.setString(8, attributes[7].toLowerCase());
 			
 			executeUpdate(ps, con);
 		
@@ -160,33 +171,35 @@ public class TransactionManager {
 	 * @param bid
 	 * @return
 	 */
-	public static String verifyBorrower(String bid) throws TransactionException {
+	public static String verifyBorrower(String sinOrStNo) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
 		String type = null;
+		String bid = null;
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  stmt = con.createStatement();
 
-		  rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'", stmt);
+		  rs = executeQuery("SELECT * FROM Borrower b where b.sinOrStNo = '" + sinOrStNo + "'", stmt);
 		  
 		  if (rs.next()) {
+			  bid = rs.getString(1);
 			  type = rs.getString(9);
 			  Date expiryDate = rs.getDate(8);
 			  // borrower has expired
 			  if (expiryDate.before(new java.util.Date())) {
-				  throw new TransactionException("Borrower with bid " + bid + " has a"
+				  throw new TransactionException("Borrower with sinOrStNo " + sinOrStNo + " has a"
 				  		+ " past expiry date of " + expiryDate.toString());
 			  }
 		  }
 		  // no borrowers with bid found
 		  else {
-			  throw new TransactionException("Borrower with bid " + bid + " does not exist");
+			  throw new TransactionException("Borrower with sinOrStNo " + sinOrStNo + " does not exist");
 		  }
 		  rs.close();
 		  rs = executeQuery("SELECT callNumber, copyNo, amount"
 		  		+ " FROM Borrower natural join Borrowing natural join Fine"
-		  		+ " where bid = '" + bid + "' and paidDate is null", stmt);
+		  		+ " where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
 		  String error = "";
 		  int i=0;
 		  while (rs.next()) {
@@ -210,7 +223,9 @@ public class TransactionManager {
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
 		}
-		return type;
+		if (type == null || bid == null)
+			return null;
+		return bid.trim() + "," + type.trim();
 	}
 
 
@@ -263,11 +278,10 @@ public class TransactionManager {
 					+ " where callNumber = '" + callNumber + "'");
 			executeUpdate(ps, con);
 			
-			ps = con.prepareStatement("Insert into Borrowing values (?,?,?,?,?,?)");
-			ps.setString(1, "" + borrowingID++);
-			ps.setString(2, bid);
-			ps.setString(3, callNumber);
-			ps.setString(4, copyNo);
+			ps = con.prepareStatement("Insert into Borrowing values (borid_sequence.nextval,?,?,?,?,?)");
+			ps.setString(1, bid);
+			ps.setString(2, callNumber);
+			ps.setString(3, copyNo);
 			
 			java.util.Date today = new java.util.Date();
 			java.util.Date inDate = null;
@@ -288,8 +302,8 @@ public class TransactionManager {
 				System.err.println("Error, unexpected borrower type: " + type);
 				System.exit(1);
 			}
-			ps.setDate(5, new Date(today.getYear(), today.getMonth(), today.getDay()));
-			ps.setDate(6, new Date(inDate.getYear(), inDate.getMonth(), inDate.getDay()));
+			ps.setDate(4, new Date(today.getYear(), today.getMonth(), today.getDay()));
+			ps.setDate(5, new Date(inDate.getYear(), inDate.getMonth(), inDate.getDay()));
 			
 			executeUpdate(ps, con);
 			
@@ -431,13 +445,13 @@ public class TransactionManager {
 	}
 
 
-	public static void payFine(String bid) throws TransactionException {
+	public static void payFine(String sinOrStNo) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			ps = con.prepareStatement("Update Fine set paidDate = ? where fid in (select fid "
-					+ "from Borrowing natural join Fine "
-					+ "where bid = '" + bid + "' and paidDate is null)");
+					+ "from Borrower natural join Borrowing natural join Fine "
+					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null)");
 			
 			java.util.Date today = new java.util.Date();
 			ps.setDate(1, new Date(today.getYear(), today.getMonth(), today.getDay()));
@@ -451,15 +465,15 @@ public class TransactionManager {
 	}
 	
 	
-	public static boolean hasFines(String bid) throws TransactionException {
+	public static boolean hasFines(String sinOrStNo) throws TransactionException {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
 			
 			ResultSet rs = executeQuery("select callnumber, copyNo, outDate, inDate, "
 					+ "fid, amount "
-					+ "from Borrowing natural join Fine "
-					+ "where bid = '" + bid + "' and paidDate is null", stmt);
+					+ "from Borrower natural join Borrowing natural join Fine "
+					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
 			
 			boolean finesExist = false;
 			if (rs.next()) {
