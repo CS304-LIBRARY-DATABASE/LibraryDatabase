@@ -489,4 +489,68 @@ public class TransactionManager {
 			throw new TransactionException("Error: " + e.getMessage());
 		}
 	}
+
+
+	public static String checkForOverdueBooks() {
+		Statement  stmt;
+		ResultSet  rs;
+		String result = "";
+		   
+		try {
+		  Connection con = DbConnection.getJDBCConnection();
+		  stmt = con.createStatement();
+
+		  rs = executeQuery("SELECT * FROM Borrowing WHERE inDate = NULL AND outDate < SYSDATE", stmt);
+		  
+		  // get info on ResultSet
+		  ResultSetMetaData rsmd = rs.getMetaData();
+		  int numCols = rsmd.getColumnCount();
+		  
+		  int [] columnTypes = new int[numCols];
+		  result += "| ";
+		  // get column names;
+		  for (int i = 0; i < numCols; i++) {
+		      result += rsmd.getColumnName(i+1) + " | ";
+		      columnTypes[i] = rsmd.getColumnType(i+1);
+		  }
+		  result = result.trim() + "\n";
+		  
+		  while(rs.next()) {
+			  result += "| ";
+			  for (int i = 0; i < numCols; i++) {
+				  switch (columnTypes[i]) {
+					  case Types.VARCHAR:
+					  case Types.CHAR:
+						  result += rs.getString(i+1) + " | ";
+						  break;
+					  case Types.INTEGER:
+					  case Types.NUMERIC:
+						  result += rs.getInt(i+1) + " | ";
+						  break;
+					  case Types.FLOAT:
+					  case Types.DOUBLE:
+						  result += rs.getDouble(i+1) + " | ";
+						  break;
+					  case Types.DATE:
+						  result += rs.getDate(i+1) + " | ";
+						  break;
+					  default:
+						  throw new TransactionException("Error: unexpected type " +
+								  columnTypes[i] + " encountered in"
+						  		+ " TransactionManager.listTableConents()");
+				  }
+			  }
+			  result = result.trim() + "\n";
+		  }
+		  
+		  // close the statement; 
+		  // the ResultSet will also be closed
+		  stmt.close();
+		} catch (SQLException e) {
+		} catch (TransactionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;		
+	}
 }

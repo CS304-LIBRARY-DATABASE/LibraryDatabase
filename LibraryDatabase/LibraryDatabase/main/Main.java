@@ -38,9 +38,9 @@ public class Main extends JFrame implements ActionListener{
 	{
 		// make a connection to the database
 		// if successful it will call init() below
-		DbConnection dbc = DbConnection.getInstance();
+		//DbConnection dbc = DbConnection.getInstance();
 
-		//init();
+		init();
 	}
 
 	public static void init() {
@@ -480,6 +480,11 @@ public class Main extends JFrame implements ActionListener{
 	 * to any of them (or to all of them).
 	 */
 	private void checkOverdue() {
+		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+
+		TransactionManager.checkForOverdueBooks();
+		
+		
 		// TODO everything
 
 	}
