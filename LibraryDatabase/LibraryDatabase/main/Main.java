@@ -40,9 +40,8 @@ public class Main extends JFrame implements ActionListener{
 	{
 		// make a connection to the database
 		// if successful it will call init() below
-		//DbConnection dbc = DbConnection.getInstance();
+		DbConnection dbc = DbConnection.getInstance();
 
-		init();
 	}
 
 	public static void init() {
@@ -723,8 +722,8 @@ public class Main extends JFrame implements ActionListener{
 	 * books related to that subject, otherwise all the books that are out are listed by the report.
 	 */
 	private void checkoutReport() {
-		// TODO everything
-
+		String result = TransactionManager.checkForOverdueBooks();
+		writeToOutputBox(result);
 	}
 
 	/*

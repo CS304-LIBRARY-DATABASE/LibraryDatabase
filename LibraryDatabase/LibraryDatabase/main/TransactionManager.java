@@ -243,26 +243,12 @@ public class TransactionManager {
 		  Connection con = DbConnection.getJDBCConnection();
 		  
 		  stmt = con.createStatement();
-		  
-		  // TODO MAKE THIS QUERY WORK
-//		  PreparedStatement ps = con.prepareStatement("SELECT copyNo, status FROM BookCopy "
-//			  		+ "where callNumber = ?");
-//		  ps.setString(1, callNumber);
-//		  rs = ps.executeQuery();
-		  
+		    
 		  rs = executeQuery("SELECT copyNo FROM BookCopy "
-		  		+ "where callNumber = '" + callNumber + "'", stmt);
-		  
-		  while (rs.next()) {
-			  // FIXME control flow never reached this statement!
-			  String status = rs.getString(2);
-			  if (status.trim().equals("in")) {
-				  copyNo = rs.getString(1);
-				  break;
-			  }
-		  }
-//		  ps.close();
-		  
+		  		+ "where callNumber = '" + callNumber + "' AND status = 'in'", stmt);
+		  if(rs.next())
+			  copyNo = rs.getString(1);
+
 		  rs.close();
 		  stmt.close();
 		  return copyNo;
@@ -276,7 +262,7 @@ public class TransactionManager {
 	public static String checkoutBook(String callNumber, String bid, String copyNo, String type) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
-		String result = "| callNumber | copyNo | inDate |\n";
+		String result = "| callNumber | copyNo | oDate |\n";
 		try {
 			ps = con.prepareStatement("Update BookCopy set status = 'out'"
 					+ " where callNumber = '" + callNumber + "'");
@@ -290,8 +276,10 @@ public class TransactionManager {
 			java.util.Date today = new java.util.Date();
 			java.util.Date inDate = null;
 			
+//			DATE today = DATE.getCurrentDate();
+//			Date inDate = null;
+			
 			Calendar c = Calendar.getInstance();
-			c.setTime(today); // Now use today date.
 			
 			if (type.equals("borrower") || type.equals("public")) {
 				c.add(Calendar.DAY_OF_MONTH, 2*7); // Adding 2 weeks
@@ -505,7 +493,7 @@ public class TransactionManager {
 		  Connection con = DbConnection.getJDBCConnection();
 		  stmt = con.createStatement();
 
-		  rs = executeQuery("SELECT * FROM Borrowing WHERE inDate = NULL AND outDate < SYSDATE", stmt);
+		  rs = executeQuery("SELECT * FROM Borrowing WHERE inDate IS NULL AND outDate < SYSDATE", stmt);
 		  
 		  // get info on ResultSet
 		  ResultSetMetaData rsmd = rs.getMetaData();
@@ -552,6 +540,7 @@ public class TransactionManager {
 		  // the ResultSet will also be closed
 		  stmt.close();
 		} catch (SQLException e) {
+			e.printStackTrace();
 		} catch (TransactionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
