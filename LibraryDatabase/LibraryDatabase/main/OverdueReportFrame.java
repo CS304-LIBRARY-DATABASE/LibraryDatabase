@@ -4,13 +4,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Properties;
 
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -123,12 +117,7 @@ public class OverdueReportFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				if(e.getActionCommand().equals(name))
-					try {
 						sendEmail();
-					} catch (TransactionException ex) {
-						JOptionPane.showMessageDialog(null, "Email(s) failed to send", "Error", JOptionPane.ERROR_MESSAGE);
-						ex.printStackTrace();
-					}
 			}
 
 		});
@@ -163,66 +152,19 @@ public class OverdueReportFrame extends JFrame {
 	}
 
 
-	private static void sendEmail() throws TransactionException{
-
-		String USER_NAME = "locallibrary304";  // GMail user name (just the part before "@gmail.com")
-		String PASSWORD = "cs304lib"; // GMail password
-		String RECIPIENT = "scott-mastro@hotmail.com";
-
-		System.out.println(getEmails()[0]);
-		
-		String from = USER_NAME;
-		String pass = PASSWORD;
-		String[] to = { RECIPIENT }; // list of recipient email addresses
-		String s = subject.getText();
-		String b = body.getText();
-
-		sendFromGMail(from, pass, to, s, b);
-	}
-
-	private static void sendFromGMail(String from, String pass, String[] to, String subject, String body)
-			throws TransactionException {
-		Properties props = System.getProperties();
-		String host = "smtp.gmail.com";
-		props.put("mail.smtp.starttls.enable", "true");
-		props.put("mail.smtp.host", host);
-		props.put("mail.smtp.user", from);
-		props.put("mail.smtp.password", pass);
-		props.put("mail.smtp.port", "587");
-		props.put("mail.smtp.auth", "true");
-
-		Session session = Session.getDefaultInstance(props);
-		MimeMessage message = new MimeMessage(session);
+	private static void sendEmail(){
 
 		send.setEnabled(false);
-
 		try {
-			message.setFrom(new InternetAddress(from));
-			InternetAddress[] toAddress = new InternetAddress[to.length];
-
-			// To get the array of addresses
-			for( int i = 0; i < to.length; i++ ) {
-				toAddress[i] = new InternetAddress(to[i]);
-			}
-
-			for( int i = 0; i < toAddress.length; i++) {
-				message.addRecipient(Message.RecipientType.TO, toAddress[i]);
-			}
-
-			message.setSubject(subject);
-			message.setText(body);
-			Transport transport = session.getTransport("smtp");
-			transport.connect(host, from, pass);
-			transport.sendMessage(message, message.getAllRecipients());
-			transport.close();
-
+			EmailHandler.sendEmail(getEmails(), subject.getText(), body.getText());
 			JOptionPane.showMessageDialog(null, "Email was sent", "Success", JOptionPane.INFORMATION_MESSAGE);
 			frame.setVisible(false);
-		}
-		catch (Exception e) {
-			throw new TransactionException();
-		}finally{
+		} catch (TransactionException e) {
+			JOptionPane.showMessageDialog(null, "Email was unable to be sent", "Error", JOptionPane.WARNING_MESSAGE);
+			e.printStackTrace();
+		} finally { 
 			send.setEnabled(true);
 		}
+		
 	}
 }
