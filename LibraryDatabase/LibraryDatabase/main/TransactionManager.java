@@ -10,6 +10,7 @@ import java.sql.Statement;
 import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -435,12 +436,62 @@ public class TransactionManager {
 		}
 	}
 
-	public static void checkForOverdueBooks() {
-		// TODO Auto-generated method stub
+	/*
+	 * Checks overdue items. The system displays a list of the items that are overdue and
+	 * the borrowers who have checked them out. The clerk may decide to send an email messages
+	 * to any of them (or to all of them).
+	 */
+	public static ArrayList<String> checkForOverdueBooks() throws TransactionException {
+		Statement  stmt;
+		ResultSet  rs;
+		ArrayList<String> result = new ArrayList<String>();
 
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			stmt = con.createStatement();
+			
+			rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
+					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
+					+ " WHERE status = 'out'"
+					+ " AND inDate < SYSDATE", stmt);
+
+			result.add(getDisplayString(rs));
+			
+			
+			rs = executeQuery("SELECT DISTINCT bid, emailAddress"
+					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
+					+ " WHERE status = 'out'"
+					+ " AND inDate < SYSDATE", stmt);
+			
+			
+			ResultSetMetaData rsmd = rs.getMetaData();
+	
+			while(rs.next())
+				result.add(rs.getString(1).trim());
+			
+			System.out.println(result);
+			
+
+			// close the statement; 
+			// the ResultSet will also be closed
+			stmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (TransactionException e) {
+			e.printStackTrace();
+			throw e;
+		}
+		
+		return result;	
 	}
 
-	public static String checkoutReport(String subject) {
+	/*
+	 * Generate a report with all the books that have been checked out. For each book the report
+	 * shows the date it was checked out and the due date. The system flags the items that are overdue.
+	 * The items are ordered by the book call number. If a subject is provided the report lists only
+	 * books related to that subject, otherwise all the books that are out are listed by the report.
+	 */
+	public static String checkoutReport(String subject) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
 		String result = "";
@@ -473,8 +524,8 @@ public class TransactionManager {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} catch (TransactionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw e;
 		}
 		return result;	
 	}

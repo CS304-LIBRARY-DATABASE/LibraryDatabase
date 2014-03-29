@@ -8,6 +8,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -484,10 +485,18 @@ public class Main extends JFrame implements ActionListener{
 	private void checkOverdue() {
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
-		TransactionManager.checkForOverdueBooks();
+		ArrayList<String> result;
+		
+		try {
+			result = TransactionManager.checkForOverdueBooks();
+			writeToOutputBox(result.get(0));
 
+		} catch (TransactionException e) {
+			makeErrorAlert("Problem encountered, transaction aborted");
+		}
+		
 
-		// TODO everything
+		// TODO email borrowers
 
 	}
 
@@ -730,11 +739,18 @@ public class Main extends JFrame implements ActionListener{
 	private void checkoutReport() {
 		String[] response = {"Optional subject key"};
 		response = createInputPopup(response, "Report for subject", null);
-		
+
 		if(response == null || response[0] == null)
 			return;
 
-		String result = TransactionManager.checkoutReport(response[0]);
+		String result = "";
+		
+		try {
+			result = TransactionManager.checkoutReport(response[0]);
+		} catch (TransactionException e) {
+			makeErrorAlert("Problem encountered, transaction aborted");
+		}
+		
 		writeToOutputBox(result);
 	}
 
