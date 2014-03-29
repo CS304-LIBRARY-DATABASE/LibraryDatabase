@@ -490,12 +490,17 @@ public class Main extends JFrame implements ActionListener{
 		try {
 			result = TransactionManager.checkForOverdueBooks();
 			writeToOutputBox(result.get(0));
+			
+			result.remove(0);
+			if(!result.isEmpty())
+				OverdueReportFrame.open(result);
 
 		} catch (TransactionException e) {
 			makeErrorAlert("Problem encountered, transaction aborted");
 		}
 		
 
+		
 		// TODO email borrowers
 
 	}

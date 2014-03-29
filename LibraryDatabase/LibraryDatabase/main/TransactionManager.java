@@ -453,7 +453,8 @@ public class TransactionManager {
 			rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
 					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
 					+ " WHERE status = 'out'"
-					+ " AND inDate < SYSDATE", stmt);
+				//	+ " AND inDate < SYSDATE"
+					, stmt);
 
 			result.add(getDisplayString(rs));
 			
@@ -461,16 +462,13 @@ public class TransactionManager {
 			rs = executeQuery("SELECT DISTINCT bid, emailAddress"
 					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
 					+ " WHERE status = 'out'"
-					+ " AND inDate < SYSDATE", stmt);
+					//+ " AND inDate < SYSDATE"
+					, stmt);
 			
-			
-			ResultSetMetaData rsmd = rs.getMetaData();
-	
+				
 			while(rs.next())
-				result.add(rs.getString(1).trim());
-			
-			System.out.println(result);
-			
+				result.add(rs.getString(2).trim());
+						
 
 			// close the statement; 
 			// the ResultSet will also be closed
