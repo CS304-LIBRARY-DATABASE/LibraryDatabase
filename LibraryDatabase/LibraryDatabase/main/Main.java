@@ -728,7 +728,13 @@ public class Main extends JFrame implements ActionListener{
 	 * books related to that subject, otherwise all the books that are out are listed by the report.
 	 */
 	private void checkoutReport() {
-		String result = TransactionManager.checkForOverdueBooks();
+		String[] response = {"Optional subject key"};
+		response = createInputPopup(response, "Report for subject", null);
+		
+		if(response == null || response[0] == null)
+			return;
+
+		String result = TransactionManager.checkoutReport(response[0]);
 		writeToOutputBox(result);
 	}
 

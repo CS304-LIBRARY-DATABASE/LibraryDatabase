@@ -293,7 +293,7 @@ public class TransactionManager {
 
 			result += "| " + callNumber + " | ";
 			result += copyNo + " | ";
-			result +=  inDate + " |\n";
+			result +=  dateFromCalendar(inDate) + " |\n";
 
 		} catch (SQLException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
@@ -474,18 +474,35 @@ public class TransactionManager {
 		}
 	}
 
+	public static void checkForOverdueBooks() {
+		// TODO Auto-generated method stub
+		
+	}
 
-
-	public static String checkForOverdueBooks() {
+	public static String checkoutReport(String subject) {
 		Statement  stmt;
 		ResultSet  rs;
 		String result = "";
 
+		String[] subjectFilter = {"", "", ""};
+		
+		if(!subject.isEmpty()){
+			subjectFilter[0] = " subject,";
+			subjectFilter[1] = " NATURAL JOIN hasSubject";
+			subjectFilter[2] = " AND subject LIKE '" + subject + "'";
+		}
+		
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT * FROM Borrowing WHERE inDate IS NULL AND outDate < SYSDATE", stmt);
+			rs = executeQuery("SELECT DISTINCT callNumber, outDate, inDate," + subjectFilter[0]
+					+ " CASE WHEN inDate < SYSDATE THEN '******'"
+					+      " WHEN inDate >= SYSDATE THEN ''"
+					+      " END AS Overdue"
+					+ " FROM Borrowing NATURAL JOIN BookCopy" + subjectFilter[1]
+					+ " WHERE status = 'out'" + subjectFilter[2]
+					+ " ORDER BY callNumber", stmt);
 
 			// get info on ResultSet
 			ResultSetMetaData rsmd = rs.getMetaData();
