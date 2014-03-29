@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -26,9 +28,9 @@ import javax.swing.border.TitledBorder;
 public class Main extends JFrame implements ActionListener{
 
 	private static Main app = new Main();
-	
+
 	private static JTextArea box;
-	
+
 	private static final String ADD_BORROWER_NAME = "Add Borrower";
 	private static final String CHECK_OUT_NAME = "Check Out Items";
 	private static final String RETURN_ITEM_NAME = "Return Item";
@@ -40,8 +42,7 @@ public class Main extends JFrame implements ActionListener{
 	{
 		// make a connection to the database
 		// if successful it will call init() below
-		DbConnection dbc = DbConnection.getInstance();
-
+		DbConnection.getInstance();
 	}
 
 	public static void init() {
@@ -108,15 +109,15 @@ public class Main extends JFrame implements ActionListener{
 		Button addNewBorrower = new Button(ADD_BORROWER_NAME);
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
-		
+
 		Button listTableContents = new Button(LIST_TABLE_CONTENTS);
 		listTableContents.addActionListener(app);
 		panel.add(listTableContents);
-		
+
 		Button queryButton = new Button(EXECUTE_QUERY);
 		queryButton.addActionListener(app);
 		panel.add(queryButton);
-		
+
 		Button checkOut = new Button(CHECK_OUT_NAME);
 		checkOut.addActionListener(app);
 		panel.add(checkOut);
@@ -218,7 +219,7 @@ public class Main extends JFrame implements ActionListener{
 
 		return panel;		
 	}
-	
+
 	/**
 	 * Dump all entries of given table to text box
 	 */
@@ -228,7 +229,7 @@ public class Main extends JFrame implements ActionListener{
 			if(tableName == null || tableName.trim().isEmpty())
 				return;
 			String result = TransactionManager.listTableConents(tableName);
-			
+
 			writeToOutputBox(result);
 		} catch (TransactionException e) {
 			makeErrorAlert(e.getMessage());
@@ -241,13 +242,13 @@ public class Main extends JFrame implements ActionListener{
 
 		if(e.getActionCommand() == ADD_BORROWER_NAME)
 			addBorrower();
-		
+
 		if(e.getActionCommand() == LIST_TABLE_CONTENTS)
 			listTableContents();
-		
+
 		if(e.getActionCommand() == EXECUTE_QUERY)
 			executeQuery();
-		
+
 		if(e.getActionCommand() == CHECK_OUT_NAME)
 			checkOut();
 
@@ -284,13 +285,13 @@ public class Main extends JFrame implements ActionListener{
 	private void executeQuery() {
 		String[] properties = new String[1];
 		properties[0] = "Raw Query String:";
-		
+
 		String [] memory = null;
 		while (true) {
 			memory = createInputPopup(properties, "Raw Query String:", memory);
 			if (memory == null)
 				return;
-			
+
 			String query = memory[0].trim();
 			if (!query.isEmpty()) {
 				try {
@@ -337,7 +338,7 @@ public class Main extends JFrame implements ActionListener{
 			sinOrStNo = memory[5];
 			expiryDate = memory[6];
 			type = memory[7];
-			
+
 			if (VerifyAttributes.verifyPassword(password) != null) {
 				makeErrorAlert(VerifyAttributes.verifyPassword(password));
 			} 
@@ -416,14 +417,14 @@ public class Main extends JFrame implements ActionListener{
 		for(int i = 1; i <= n; i++) {
 			properties[i] = "Callnumber #" + String.valueOf(i);
 		}
-		
+
 		String [] memory = null;
 		while (true) {
 			memory = createInputPopup(properties, "Check out " + String.valueOf(n) + " books", memory);
 
 			if (memory == null)
 				return;
-			
+
 			// verify borrower
 			String sinOrStNo =  memory[0];
 			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
@@ -484,8 +485,8 @@ public class Main extends JFrame implements ActionListener{
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
 		TransactionManager.checkForOverdueBooks();
-		
-		
+
+
 		// TODO everything
 
 	}
@@ -499,7 +500,7 @@ public class Main extends JFrame implements ActionListener{
 		//HasAuthor (callNumber, name)
 		//HasSubject (callNumber, subject)
 		//BookCopy (callNumber, copyNo, status)
-		
+
 		JRadioButton titleRB = new JRadioButton("Search by Title");
 		JRadioButton authorRB = new JRadioButton("Search by Author");
 		JRadioButton subjectRB = new JRadioButton("Search by Subject");
@@ -507,7 +508,7 @@ public class Main extends JFrame implements ActionListener{
 		bg.add(titleRB);
 		bg.add(authorRB);
 		bg.add(subjectRB);
-		
+
 		JPanel p = new JPanel(new SpringLayout());
 		p.add(titleRB);
 		p.add(authorRB);
@@ -518,7 +519,7 @@ public class Main extends JFrame implements ActionListener{
 				3, 1,        //rows, cols
 				6, 6,        //initX, initY
 				6, 6);       //xPad, yPad
-		
+
 		final JOptionPane window = new JOptionPane();
 
 		while(true) {
@@ -527,7 +528,7 @@ public class Main extends JFrame implements ActionListener{
 
 			if(result != 0)
 				return;
-			
+
 			String[] searchKey = new String[1];
 			if (titleRB.isSelected()) {
 				searchKey[0] = "Title";
@@ -542,7 +543,7 @@ public class Main extends JFrame implements ActionListener{
 			break;
 		}
 	}
-	
+
 	private void searchBy(String [] searchKey) {
 		String searchBy = searchKey[0];
 		String [] memory = null;
@@ -550,9 +551,9 @@ public class Main extends JFrame implements ActionListener{
 			memory = createInputPopup(searchKey, "Search by " + searchBy, memory);
 			if(memory == null)
 				break;
-	
+
 			String search = memory[0];
-	
+
 			if(search.trim().isEmpty()) {
 				JOptionPane.showMessageDialog(null, "Please enter a search key", "No input", JOptionPane.ERROR_MESSAGE);
 			}
@@ -634,7 +635,7 @@ public class Main extends JFrame implements ActionListener{
 			memory = createInputPopup(getInfo, "Validation", memory);
 			if(memory == null)
 				return;
-	
+
 			sinOrStNo = memory[0];
 			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
 				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
@@ -680,11 +681,11 @@ public class Main extends JFrame implements ActionListener{
 
 		while (true) {
 			memory = createInputPopup(properties, "Add new book", memory);
-	
+
 			if (memory == null) {
 				return;
 			}
-	
+
 			callNumber = memory[0];
 			isbn = memory[1];
 			title = memory[2];
@@ -693,7 +694,7 @@ public class Main extends JFrame implements ActionListener{
 			year = memory[5];
 			String additionalAuthors = memory[6];
 			String subjects = memory[7];
-			
+
 			if (VerifyAttributes.verifyCallNumber(callNumber) != null) {
 				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber));
 			} else if (VerifyAttributes.verifyISBN(isbn) != null) {
@@ -708,8 +709,13 @@ public class Main extends JFrame implements ActionListener{
 				makeErrorAlert(VerifyAttributes.verifyYear(year, 2));
 			} else {
 				// Add book to the database
-				TransactionHelper.addBook(memory);
-				makeSuccessAlert("Book successfully added");
+				try {
+					TransactionHelper.addBook(memory);
+					makeSuccessAlert("Book successfully added");
+				} catch (TransactionException e) {
+					makeSuccessAlert("Book was not successfully added");
+					e.printStackTrace();
+				}
 				break;
 			}
 		}
@@ -817,7 +823,7 @@ public class Main extends JFrame implements ActionListener{
 
 		return input;
 	}
-	
+
 	/**
 	 * Make a popup window with an error message
 	 * @param message
@@ -825,7 +831,7 @@ public class Main extends JFrame implements ActionListener{
 	public static void makeErrorAlert(String message) {
 		JOptionPane.showMessageDialog(null, message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
-	
+
 	/**
 	 * Make a popup window with an success message
 	 * @param message

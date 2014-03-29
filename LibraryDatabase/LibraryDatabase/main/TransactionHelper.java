@@ -19,7 +19,7 @@ public class TransactionHelper {
 			e.printStackTrace();
 			return;
 		}
-		
+
 		String result = "";
 		for (int i = 1; i < properties.length; i++) {
 			String callNumber = properties[i].trim();
@@ -35,7 +35,7 @@ public class TransactionHelper {
 				return;
 			}
 		}
-		
+
 		// output result
 		if (result.isEmpty()) {
 			Main.writeToOutputBox("None of the requested books are available");
@@ -44,37 +44,31 @@ public class TransactionHelper {
 		}
 	}
 
-	public static void addBook(String[] fields) {
+	public static void addBook(String[] fields) throws TransactionException {
 		String callNumber = fields[0];
-		
+
 		// check if the book exists already, in which case only add a new copy
-		try {
-			boolean exists = TransactionManager.checkIfBookExists(callNumber);
-			if (exists) {
-				// add a new copy
-				TransactionManager.addNewBookCopy(fields);
-			} else {
-				// add a new book, and copy C1
-				TransactionManager.addNewBook(fields);
-			}
-		} catch (TransactionException e) {
-			Main.makeErrorAlert(e.getMessage());
-			e.printStackTrace();
-			return;
-		}
-		
+
+		boolean exists = TransactionManager.checkIfBookExists(callNumber);
+		if (exists) {
+			// add a new copy
+			TransactionManager.addNewBookCopy(fields);
+		} else {
+			// add a new book, and copy C1
+			TransactionManager.addNewBook(fields);
+		}		
 	}
-	
+
 	public static List<String> getCommaSeparatedVals(String input) {
 		if (input == null)
 			return null;
 		input = input.trim();
 		if (input.isEmpty())
 			return null;
-		
+
 		String [] arr = input.split(",");
 		List<String> result = new ArrayList<String>();
-		
+
 		for (int i=0; i < arr.length; i++) {
 			String s = arr[i].trim();
 			if (!s.isEmpty())
@@ -89,7 +83,7 @@ public class TransactionHelper {
 		TransactionManager.payFine(sinOrStNo);
 	}
 
-	
+
 	/**
 	 * Search for books using keyword search on titles, authors and subjects. The result is a 
 	 * list of books that match the search together with the number of copies that are in and out.
