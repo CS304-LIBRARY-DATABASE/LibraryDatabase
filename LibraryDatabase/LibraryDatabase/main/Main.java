@@ -9,10 +9,12 @@ import java.awt.event.WindowListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -498,30 +500,75 @@ public class Main extends JFrame implements ActionListener{
 		//HasAuthor (callNumber, name)
 		//HasSubject (callNumber, subject)
 		//BookCopy (callNumber, copyNo, status)
+		
+		JRadioButton titleRB = new JRadioButton("Search by Title");
+		JRadioButton authorRB = new JRadioButton("Search by Author");
+		JRadioButton subjectRB = new JRadioButton("Search by Subject");
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(titleRB);
+		bg.add(authorRB);
+		bg.add(subjectRB);
+		
+		JPanel p = new JPanel(new SpringLayout());
+		p.add(titleRB);
+		p.add(authorRB);
+		p.add(subjectRB);
 
-		String title;
-		String author;
-		String subject;
+		//Lay out the panel.
+		SpringUtilities.makeCompactGrid(p,
+				3, 1,        //rows, cols
+				6, 6,        //initX, initY
+				6, 6);       //xPad, yPad
+		
+		final JOptionPane window = new JOptionPane();
 
-		while(true){
-			String[] searchKey = {"Title", "Author", "Subject"};
-			searchKey = createInputPopup(searchKey, "Search keys", null);
+		while(true) {
+			int result = window.showOptionDialog(null, p, "", JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null, null, null);
 
-			if(searchKey == null)
+			if(result != 0)
 				return;
-
-			title = searchKey[0];
-			author = searchKey[1];
-			subject = searchKey[2];
-
-			if(title.isEmpty() && author.isEmpty() && subject.isEmpty())
-				JOptionPane.showMessageDialog(null, "Please enter a search key", "No input", JOptionPane.ERROR_MESSAGE);
-			else
-				break;
+			
+			String[] searchKey = new String[1];
+			if (titleRB.isSelected()) {
+				searchKey[0] = "Title";
+			} else if (authorRB.isSelected()) {
+				searchKey[0] = "Author";
+			} else if (subjectRB.isSelected()) {
+				searchKey[0] = "Subject";
+			} else {
+				continue;
+			}
+			searchBy(searchKey);
+			break;
 		}
-
-		//TODO: search/filter for relevant books
-		//TODO: display books
+	}
+	
+	private void searchBy(String [] searchKey) {
+		String searchBy = searchKey[0];
+		String [] memory = null;
+		while (true) {
+			memory = createInputPopup(searchKey, "Search by " + searchBy, memory);
+			if(memory == null)
+				break;
+	
+			String search = memory[0];
+	
+			if(search.trim().isEmpty()) {
+				JOptionPane.showMessageDialog(null, "Please enter a search key", "No input", JOptionPane.ERROR_MESSAGE);
+			}
+			else {
+				// search/filter for relevant books, and display result
+				try {
+					String result = TransactionHelper.searchBy(searchBy, search.trim());
+					writeToOutputBox(result);
+					break;
+				} catch (TransactionException e) {
+					makeErrorAlert(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 
 	/*

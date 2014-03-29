@@ -88,4 +88,22 @@ public class TransactionHelper {
 	public static void payFine(String sinOrStNo) throws TransactionException {
 		TransactionManager.payFine(sinOrStNo);
 	}
+
+	
+	/**
+	 * Search for books using keyword search on titles, authors and subjects. The result is a 
+	 * list of books that match the search together with the number of copies that are in and out.
+	 * @return 
+	 */
+	public static String searchBy(String searchBy, String key) throws TransactionException {
+		if (searchBy.equals("Title")) {
+			return TransactionManager.searchByTitle(key);
+		} else if (searchBy.equals("Author")) {
+			return TransactionManager.searchByAuthor(key);
+		} else if (searchBy.equals("Subject")) {
+			return TransactionManager.searchBySubject(key);
+		} else {
+			throw new TransactionException("Error, unexpected searchBy string " + searchBy);
+		}
+	}
 }

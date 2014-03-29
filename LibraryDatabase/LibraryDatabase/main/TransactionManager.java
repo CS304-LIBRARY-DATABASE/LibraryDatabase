@@ -238,30 +238,34 @@ public class TransactionManager {
 	public static String checkAvailability(String callNumber) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
-		   
+		String copyNo = null;
 		try {
 		  Connection con = DbConnection.getJDBCConnection();
 		  
-		  //stmt = con.createStatement();
+		  stmt = con.createStatement();
 		  
 		  // TODO MAKE THIS QUERY WORK
-		  PreparedStatement ps = con.prepareStatement("SELECT copyNo FROM BookCopy b "
-			  		+ "where b.callNumber = ? and b.status = ?");
-		  ps.setString(1, callNumber);
-		  ps.setString(2, "in");
+//		  PreparedStatement ps = con.prepareStatement("SELECT copyNo, status FROM BookCopy "
+//			  		+ "where callNumber = ?");
+//		  ps.setString(1, callNumber);
+//		  rs = ps.executeQuery();
 		  
-		  String result = null;
-		  rs = ps.executeQuery();
-//		  rs = executeQuery("SELECT copyNo FROM BookCopy b "
-//		  		+ "where b.callNumber = '" + callNumber + "' and b.status = 'in'", stmt);
-		  if (rs.next()) {
+		  rs = executeQuery("SELECT copyNo FROM BookCopy "
+		  		+ "where callNumber = '" + callNumber + "'", stmt);
+		  
+		  while (rs.next()) {
 			  // FIXME control flow never reached this statement!
-			  result = rs.getString(1);
+			  String status = rs.getString(2);
+			  if (status.trim().equals("in")) {
+				  copyNo = rs.getString(1);
+				  break;
+			  }
 		  }
-		  ps.close();
+//		  ps.close();
+		  
 		  rs.close();
-		  //stmt.close();
-		  return result;
+		  stmt.close();
+		  return copyNo;
 		  
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
@@ -491,6 +495,7 @@ public class TransactionManager {
 	}
 
 
+
 	public static String checkForOverdueBooks() {
 		Statement  stmt;
 		ResultSet  rs;
@@ -551,6 +556,52 @@ public class TransactionManager {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return result;		
+		return result;	
+	}
+	
+	
+	/**
+	 * Search for books using keyword search on titles, authors and subjects. The result is a 
+	 * list of books that match the search together with the number of copies that are in and out.
+	 * @return 
+	 */
+	public static String searchByTitle(String title) throws TransactionException {
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			Statement  stmt = con.createStatement();
+			
+			ResultSet rs = executeQuery("select callnumber, isbn, title, mainauthor, publisher, year, "
+					+ "NumIn = (select count(*) from "
+							+ "BookCopy bc where b.callNumber = bc.callNumber and status = 'in'), "
+							+ "NumOut = (select count(*) from "
+							+ "BookCopy bcO where b.callNumber = bcO.callNumber and status = 'out') "
+					+ "from Book b "
+					+ "where title = '" + title + "'", stmt);
+			
+			String result = "";
+			while (rs.next()) {
+				String callNumber = rs.getString(1);
+			}
+			
+			rs.close();
+			stmt.close();
+			return result;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+
+
+	public static String searchByAuthor(String key) throws TransactionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	public static String searchBySubject(String key) throws TransactionException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

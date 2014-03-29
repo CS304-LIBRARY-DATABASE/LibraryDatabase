@@ -22,6 +22,8 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 public class DbConnection implements ActionListener {
+	
+	private static final String DB_CONNECT_URL = "jdbc:oracle:thin:@dbhost.ugrad.cs.ubc.ca:1522:ug"; 
 
 		
 	private static DbConnection dbc = null;
@@ -149,10 +151,8 @@ public class DbConnection implements ActionListener {
 	     * connects to Oracle database named ug using user supplied username and password
 	     */ 
 	    private boolean connect(String username, String password) {
-	      String connectURL = "jdbc:oracle:thin:@dbhost.ugrad.cs.ubc.ca:1522:ug"; 
-
 	      try {
-			con = DriverManager.getConnection(connectURL,username,password);
+			con = DriverManager.getConnection(DB_CONNECT_URL,username,password);
 		
 			System.out.println("\nConnected to Oracle!");
 			return true;
