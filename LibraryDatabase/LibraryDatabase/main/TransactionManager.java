@@ -114,46 +114,7 @@ public class TransactionManager {
 
 			rs = executeQuery("SELECT * FROM " + tableName, stmt);
 
-			// get info on ResultSet
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int numCols = rsmd.getColumnCount();
-
-			int [] columnTypes = new int[numCols];
-			result += "| ";
-			// get column names;
-			for (int i = 0; i < numCols; i++) {
-				result += rsmd.getColumnName(i+1) + " | ";
-				columnTypes[i] = rsmd.getColumnType(i+1);
-			}
-			result = result.trim() + "\n";
-
-			while(rs.next()) {
-				result += "| ";
-				for (int i = 0; i < numCols; i++) {
-					switch (columnTypes[i]) {
-					case Types.VARCHAR:
-					case Types.CHAR:
-						result += rs.getString(i+1) + " | ";
-						break;
-					case Types.INTEGER:
-					case Types.NUMERIC:
-						result += rs.getInt(i+1) + " | ";
-						break;
-					case Types.FLOAT:
-					case Types.DOUBLE:
-						result += rs.getDouble(i+1) + " | ";
-						break;
-					case Types.DATE:
-						result += rs.getDate(i+1) + " | ";
-						break;
-					default:
-						throw new TransactionException("Error: unexpected type " +
-								columnTypes[i] + " encountered in"
-								+ " TransactionManager.listTableConents()");
-					}
-				}
-				result = result.trim() + "\n";
-			}
+			result = getDisplayString(rs);
 
 			// close the statement; 
 			// the ResultSet will also be closed
@@ -476,7 +437,7 @@ public class TransactionManager {
 
 	public static void checkForOverdueBooks() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	public static String checkoutReport(String subject) {
@@ -485,13 +446,13 @@ public class TransactionManager {
 		String result = "";
 
 		String[] subjectFilter = {"", "", ""};
-		
+
 		if(!subject.isEmpty()){
 			subjectFilter[0] = " subject,";
 			subjectFilter[1] = " NATURAL JOIN hasSubject";
 			subjectFilter[2] = " AND subject LIKE '" + subject + "'";
 		}
-		
+
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
@@ -501,49 +462,10 @@ public class TransactionManager {
 					+      " WHEN inDate >= SYSDATE THEN ''"
 					+      " END AS Overdue"
 					+ " FROM Borrowing NATURAL JOIN BookCopy" + subjectFilter[1]
-					+ " WHERE status = 'out'" + subjectFilter[2]
-					+ " ORDER BY callNumber", stmt);
+							+ " WHERE status = 'out'" + subjectFilter[2]
+									+ " ORDER BY callNumber", stmt);
 
-			// get info on ResultSet
-			ResultSetMetaData rsmd = rs.getMetaData();
-			int numCols = rsmd.getColumnCount();
-
-			int [] columnTypes = new int[numCols];
-			result += "| ";
-			// get column names;
-			for (int i = 0; i < numCols; i++) {
-				result += rsmd.getColumnName(i+1) + " | ";
-				columnTypes[i] = rsmd.getColumnType(i+1);
-			}
-			result = result.trim() + "\n";
-
-			while(rs.next()) {
-				result += "| ";
-				for (int i = 0; i < numCols; i++) {
-					switch (columnTypes[i]) {
-					case Types.VARCHAR:
-					case Types.CHAR:
-						result += rs.getString(i+1) + " | ";
-						break;
-					case Types.INTEGER:
-					case Types.NUMERIC:
-						result += rs.getInt(i+1) + " | ";
-						break;
-					case Types.FLOAT:
-					case Types.DOUBLE:
-						result += rs.getDouble(i+1) + " | ";
-						break;
-					case Types.DATE:
-						result += rs.getDate(i+1) + " | ";
-						break;
-					default:
-						throw new TransactionException("Error: unexpected type " +
-								columnTypes[i] + " encountered in"
-								+ " TransactionManager.listTableConents()");
-					}
-				}
-				result = result.trim() + "\n";
-			}
+			result = getDisplayString(rs);
 
 			// close the statement; 
 			// the ResultSet will also be closed
@@ -601,6 +523,54 @@ public class TransactionManager {
 	public static String searchBySubject(String key) throws TransactionException {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public static String getDisplayString (ResultSet rs) throws SQLException, TransactionException{
+
+		String result = "";
+
+		// get info on ResultSet
+		ResultSetMetaData rsmd = rs.getMetaData();
+		int numCols = rsmd.getColumnCount();
+
+		int [] columnTypes = new int[numCols];
+		result += "| ";
+		// get column names;
+		for (int i = 0; i < numCols; i++) {
+			result += rsmd.getColumnName(i+1) + " | ";
+			columnTypes[i] = rsmd.getColumnType(i+1);
+		}
+		result = result.trim() + "\n";
+
+		while(rs.next()) {
+			result += "| ";
+			for (int i = 0; i < numCols; i++) {
+				switch (columnTypes[i]) {
+				case Types.VARCHAR:
+				case Types.CHAR:
+					result += rs.getString(i+1) + " | ";
+					break;
+				case Types.INTEGER:
+				case Types.NUMERIC:
+					result += rs.getInt(i+1) + " | ";
+					break;
+				case Types.FLOAT:
+				case Types.DOUBLE:
+					result += rs.getDouble(i+1) + " | ";
+					break;
+				case Types.DATE:
+					result += rs.getDate(i+1) + " | ";
+					break;
+				default:
+					throw new TransactionException("Error: unexpected type " +
+							columnTypes[i] + " encountered in"
+							+ " TransactionManager.listTableConents()");
+				}
+			}
+			result = result.trim() + "\n";
+		}
+
+		return result;
 	}
 
 	@SuppressWarnings("deprecation")
