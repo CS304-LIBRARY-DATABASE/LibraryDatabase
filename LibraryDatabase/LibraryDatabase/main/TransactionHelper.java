@@ -44,7 +44,7 @@ public class TransactionHelper {
 		}
 	}
 
-	public static void addBook(String[] fields) throws TransactionException {
+	public static boolean addBook(String[] fields) throws TransactionException {
 		String callNumber = fields[0];
 
 		// check if the book exists already, in which case only add a new copy
@@ -52,10 +52,17 @@ public class TransactionHelper {
 		boolean exists = TransactionManager.checkIfBookExists(callNumber);
 		if (exists) {
 			// add a new copy
-			TransactionManager.addNewBookCopy(fields);
+			int result = Main.createInfoAlert("", "The book with CallNumber " + fields[0] +
+					" already exists in\nthe database. Would you like to add a new copy of this book?");
+			if (result == 0) {
+				TransactionManager.addNewBookCopy(callNumber);
+				return true;
+			}
+			return false;
 		} else {
 			// add a new book, and copy C1
 			TransactionManager.addNewBook(fields);
+			return true;
 		}		
 	}
 

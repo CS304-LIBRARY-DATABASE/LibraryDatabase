@@ -457,8 +457,8 @@ public class TransactionManager {
 	}
 
 
-	public static void addNewBookCopy(String[] fields) throws TransactionException {
-		String callNumber = fields[0].trim();
+	public static void addNewBookCopy(String callNumber) throws TransactionException {
+		callNumber = callNumber.trim();
 
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
@@ -488,7 +488,7 @@ public class TransactionManager {
 
 				executeUpdate(ps, con);
 			} else {
-				throw new TransactionException("Error: no previous BookCopies found "
+				throw new TransactionException("Error: no Books found "
 						+ "with callNumber: " + callNumber);
 			}
 		} catch (SQLException e) {
@@ -696,8 +696,6 @@ public class TransactionManager {
 		ResultSet  rs;
 		String result = "";
 
-		System.out.println(year);
-
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
@@ -705,7 +703,7 @@ public class TransactionManager {
 			rs = executeQuery("SELECT callNumber, title, mainAuthor, year, COUNT(callNumber) AS count" 
 					+ " FROM Borrowing NATURAL JOIN Book" 
 					+ " WHERE ROWNUM <= " + n
-					+ " AND year LIKE " + year
+					+ " AND (EXTRACT(year FROM indate) = " + year + " OR EXTRACT(year FROM outdate) = " + year + ")"
 					+ " GROUP BY callNumber, title, mainAuthor, year"
 					+ " ORDER BY count DESC"
 					, stmt);
