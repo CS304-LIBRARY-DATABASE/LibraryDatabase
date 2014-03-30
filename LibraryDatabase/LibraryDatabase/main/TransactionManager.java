@@ -263,6 +263,56 @@ public class TransactionManager {
 		return result;
 	}
 
+	/*
+	 * Processes a return. When an item is returned, the clerk records the
+	 * return by providing the item's catalogue number. The system determines
+	 * the borrower who had borrowed the item and records that the item is
+	 * "in". If the item is overdue, a fine is assessed for the borrower.
+	 * If there is a hold request for this item by another borrower, the
+	 * item is registered as "on hold" and a message is send to the borrower
+	 * who made the hold request.
+	 */
+	public static String returnItem(String callNumber, String copyNumber) {
+		//Fine (fid, amount, issuedDate, paidDate, borid)
+		//BookCopy (callNumber, copyNo, status)
+		//HoldRequest(hid, bid, callNumber, issuedDate)
+		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+
+		String result = null;
+
+		try {
+			checkIfBookExists(callNumber, copyNumber);
+		} catch (TransactionException e) {
+			e.printStackTrace();
+			return "Could not find book " + callNumber + " " + copyNumber;
+		}
+
+		String bid = "";
+		Statement  stmt;
+		ResultSet  rs;
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			stmt = con.createStatement();
+
+			rs = executeQuery("SELECT bid"
+					+ " FROM Borrowing"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " AND copyNo = '" + copyNumber + "'", stmt);
+
+			if (rs.next()) 
+				bid = rs.getString(1);
+			
+
+			rs.close();
+			stmt.close();
+
+
+			return result;
+		}catch (Exception e){
+			return "Could not find borrower who is taking out this book.";
+		}
+	}
+
 
 	public static boolean checkIfBookExists(String callNumber) throws TransactionException {
 		Statement  stmt;
@@ -289,6 +339,35 @@ public class TransactionManager {
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
 		}
+	}
+
+	public static boolean checkIfBookExists(String callNumber, String copyNumber) throws TransactionException {
+		checkIfBookExists(callNumber);
+		Statement  stmt;
+		ResultSet  rs;
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			stmt = con.createStatement();
+
+			boolean result;
+
+			rs = executeQuery("SELECT * FROM BookCopy WHERE copyNo = '" + callNumber + "'", stmt);
+
+			if (rs.next()) {
+				result = true;
+			}
+			// no borrowers with bid found
+			else {
+				result = false;
+			}
+			rs.close();
+			stmt.close();
+			return result;
+
+		} catch (SQLException ex) {
+			throw new TransactionException("Error: " + ex.getMessage());
+		}
+
 	}
 
 
@@ -589,7 +668,7 @@ public class TransactionManager {
 		String result = "";
 
 		System.out.println(year);
-		
+
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
@@ -628,12 +707,12 @@ public class TransactionManager {
 
 			ResultSet rs = executeQuery("select callnumber, isbn, title, mainauthor, publisher, year, "
 					+ "(select count(*) from "
-							+ "BookCopy bc where b.callNumber = bc.callNumber and status = 'in') as NumberIn, "
+					+ "BookCopy bc where b.callNumber = bc.callNumber and status = 'in') as NumberIn, "
 					+ "(select count(*) from "
-							+ "BookCopy bcO where b.callNumber = bcO.callNumber and status = 'out') as NumberOut "
+					+ "BookCopy bcO where b.callNumber = bcO.callNumber and status = 'out') as NumberOut "
 					+ "from Book b "
 					+ "where upper(title) like upper('%" + title + "%')", stmt);
-			
+
 			String result = getDisplayString(rs);
 			rs.close();
 			stmt.close();
@@ -650,21 +729,21 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
-			
+
 			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor, ha.name, b.publisher, b.year, "
 					+ "(select count(*) from "
-							+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
+					+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
 					+ "(select count(*) from "
-							+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
+					+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
 					+ "from Book b, HasAuthor ha "
 					+ "where (b.callNumber = ha.callNumber and upper(ha.name) like upper('%" + author + "%')) or "
-							+ "upper(b.mainAuthor) like upper('%" + author + "%')", stmt);
+					+ "upper(b.mainAuthor) like upper('%" + author + "%')", stmt);
 
 			String result = getDisplayString(rs);
 			rs.close();
 			stmt.close();
 			return result;
-			
+
 		} catch (SQLException e) {
 			System.out.println("checkFine Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
@@ -676,20 +755,20 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
-			
+
 			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor, b.publisher, b.year, hs.subject, "
 					+ "(select count(*) from "
-							+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
+					+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
 					+ "(select count(*) from "
-							+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
+					+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
 					+ "from Book b, HasSubject hs "
 					+ "where b.callNumber = hs.callNumber and upper(hs.subject) like upper('%" + subject + "%')", stmt);
-			
+
 			String result = getDisplayString(rs);
 			rs.close();
 			stmt.close();
 			return result;
-			
+
 		} catch (SQLException e) {
 			System.out.println("checkFine Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
@@ -709,15 +788,15 @@ public class TransactionManager {
 			column[i] = rsmd.getColumnName(i+1);
 			columnTypes[i] = rsmd.getColumnType(i+1);
 		}
-		
+
 		String result = "";
-		
+
 		while(rs.next()) {
 			result += "------------------------------------"
 					+ "------------------------------------\n";
 			for (int i = 0; i < numCols; i++) {
 				result += column[i] + ": ";
-						
+
 				switch (columnTypes[i]) {
 				case Types.VARCHAR:
 				case Types.CHAR:

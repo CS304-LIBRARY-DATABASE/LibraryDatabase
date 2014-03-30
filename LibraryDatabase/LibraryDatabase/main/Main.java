@@ -193,7 +193,7 @@ public class Main extends JFrame implements ActionListener{
 	private static JPanel generalInterface(){
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-		
+
 		TitledBorder title;
 		title = BorderFactory.createTitledBorder("Output");
 		panel.setBorder(title);
@@ -205,7 +205,7 @@ public class Main extends JFrame implements ActionListener{
 		Button queryButton = new Button(EXECUTE_QUERY);
 		queryButton.addActionListener(app);
 		panel.add(queryButton);
-		
+
 		box = new JTextArea();
 		JScrollPane scroll = new JScrollPane(box);
 
@@ -460,16 +460,32 @@ public class Main extends JFrame implements ActionListener{
 	 * who made the hold request.
 	 */
 	private void returnItem() {
-		//Fine (fid, amount, issuedDate, paidDate, borid)
 		//BookCopy (callNumber, copyNo, status)
-		//HoldRequest(hid, bid, callNumber, issuedDate)
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
+		String callNumber;
+		String copyNumber;
+		
+		String[] memory = null;
+		while(true){
 
-		String[] callNumber = {"Call Number"};
-		callNumber = createInputPopup(callNumber, "Return a book", null);
+			String[] input = {"Call Number", "Copy Number"};
+			memory = createInputPopup(input, "Return a book", memory);
 
-		// TODO: determine borrower
+			callNumber = memory[0];
+			copyNumber = memory[1];
+			
+			if(VerifyAttributes.verifyCallNumber(callNumber) != null)
+				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber));
+			else if(VerifyAttributes.verifyCopyNumber(copyNumber) != null)
+				makeErrorAlert(VerifyAttributes.verifyCopyNumber(copyNumber));
+			else
+				break;
+
+		}
+		
+		TransactionManager.returnItem(callNumber, copyNumber);
+
 		// TODO: check if borrower has outstanding fine, change afterwards
 		// TODO: check if there is hold request for book
 		// TODO: update all tuples
@@ -494,12 +510,12 @@ public class Main extends JFrame implements ActionListener{
 
 		try {
 			result = TransactionManager.checkForOverdueBooks();
-			
+
 			if(result.get(0).isEmpty()){
 				makeSuccessAlert("There are no overdue books!");
 				return;
 			}
-			
+
 			writeToOutputBox(result.get(0));
 
 
@@ -587,7 +603,7 @@ public class Main extends JFrame implements ActionListener{
 				try {
 					String result = TransactionHelper.searchBy(searchBy, search.trim());
 					writeToOutputBox(result);
-					
+
 				} catch (TransactionException e) {
 					makeErrorAlert(e.getMessage());
 					e.printStackTrace();
@@ -797,7 +813,7 @@ public class Main extends JFrame implements ActionListener{
 
 			year = memory[0];
 			n = memory[1];
-			
+
 			if(VerifyAttributes.verifyYear(year, 2) != null)
 				makeErrorAlert(VerifyAttributes.verifyYear(year, 2));
 			else if(!VerifyAttributes.verifyInteger(n) || Integer.valueOf(n) <= 0)
@@ -812,7 +828,7 @@ public class Main extends JFrame implements ActionListener{
 		} catch (TransactionException e) {
 			makeErrorAlert("Problem encountered, transaction aborted");
 		}
-			
+
 	}
 
 

@@ -205,6 +205,17 @@ public class VerifyAttributes {
 		return null;
 	}
 	
+	public static String verifyCopyNumber(String copyNumber) {
+		
+		if(isEmpty(copyNumber))
+			return ERROR_PATTERN + "Copy number field is empty";
+						
+		if (!copyNumber.startsWith("C")) 
+			return ERROR_PATTERN + "Copy number must begin with a 'C'";
+
+		return null;
+	}
+	
 	public static String verifyISBN(String isbn) {
 
 		if(isEmpty(isbn))
