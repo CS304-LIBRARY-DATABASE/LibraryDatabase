@@ -5,13 +5,15 @@ import java.util.ArrayList;
 
 public class TransactionHelper {
 
-	public static void checkout(String [] properties, String bid) {
+	public static void checkout(String [] properties, String sinOrStNo) {
 		String type = null;
+		String bid = null;
 		try {
 			// check if borrower is valid
-			String bidType = TransactionManager.verifyBorrower(bid);
+			String bidType = TransactionManager.verifyBorrower(sinOrStNo);
 			String [] spl = bidType.split(",");
 			type = spl[1];
+			bid = spl[0];
 		} catch (TransactionException e) {
 			Main.makeErrorAlert(e.getMessage());
 			e.printStackTrace();

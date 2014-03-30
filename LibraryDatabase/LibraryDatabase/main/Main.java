@@ -412,7 +412,7 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 		String[] properties = new String[1 + n];
-		properties[0] = "Borrower ID:";
+		properties[0] = "Sin/StNo:";
 
 		for(int i = 1; i <= n; i++) {
 			properties[i] = "Callnumber #" + String.valueOf(i);
@@ -426,9 +426,9 @@ public class Main extends JFrame implements ActionListener{
 				return;
 
 			// verify borrower
-			String bid =  memory[0];
-			if (VerifyAttributes.verifyBID(bid) != null) {
-				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			String sinOrStNo =  memory[0];
+			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
 			}
 			else {
 				// verify callnumbers
@@ -442,7 +442,7 @@ public class Main extends JFrame implements ActionListener{
 				}
 				if (valid) {
 					// checkout books
-					TransactionHelper.checkout(memory, bid);
+					TransactionHelper.checkout(memory, sinOrStNo);
 					break;
 				}
 			}
@@ -623,24 +623,45 @@ public class Main extends JFrame implements ActionListener{
 	private void checkAccount() {
 		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
 
-		String bid;
+		String sinOrStNo;
+		String[] getInfo = {"Sin/StNo"};
+		String [] memory = null;
+		
+		while (true) {
+			memory = createInputPopup(getInfo, "Check Account", memory);
+			if(memory == null)
+				return;
 
-		String[] getInfo = {"Borrower ID"};
-		getInfo = createInputPopup(getInfo, "Validation", null);
-
-		if(getInfo == null)
-			return;
-
-		bid = getInfo[0];
-
-		//TODO: check that Borrower ID is good
-		//TODO: query for borrowed tuples
-		//TODO: query for fines
-		//TODO: query for hold requests
-		//TODO: display
-
-
-
+			sinOrStNo = memory[0];
+			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
+			} else {
+				// update unpaid fine tuples
+				try {
+					String output = "";
+					String booksOut = TransactionManager.hasBooksOut(sinOrStNo);
+					if (!booksOut.isEmpty()) {
+						// borrower has pending fines
+						output += "Items Borrowed and still Out:\n" + booksOut;
+					}
+					String fines = TransactionManager.hasFines(sinOrStNo);
+					if (!fines.isEmpty()) {
+						// borrower has pending fines
+						output += "Outstanding Fines:\n" + fines;
+					}
+					String holdRequests = TransactionManager.hasHoldRequests(sinOrStNo);
+					if (!holdRequests.isEmpty()) {
+						// borrower has pending fines
+						output += "Hold Requests:\n" + holdRequests;
+					}
+					writeToOutputBox(output);
+				} catch (TransactionException e) {
+					makeErrorAlert(e.getMessage());
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
 	}
 
 	/*
@@ -650,19 +671,19 @@ public class Main extends JFrame implements ActionListener{
 	private void holdRequest() {
 		//HoldRequest(hid, bid, callNumber, issuedDate) 
 
-		String bid;
+		String sinOrStNo;
 		String callNumber;
 
-		String[] input = {"Borrower ID", "Call #"};
+		String[] input = {"Sin/StNo", "Call #"};
 		input = createInputPopup(input, "Hold request", null);
 
 		if(input == null)
 			return;
 
-		bid = input[0];
+		sinOrStNo = input[0];
 		callNumber = input[1];
 
-		String result = TransactionManager.holdRequest(bid, callNumber);
+		String result = TransactionManager.holdRequest(sinOrStNo, callNumber);
 
 		if(result == null)
 			makeSuccessAlert("Hold request successful.");
@@ -674,28 +695,28 @@ public class Main extends JFrame implements ActionListener{
 	 * Pay a fine.
 	 */
 	private void payFine() {
-		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
+		String sinOrStNo;
 
-		String bid;
-
-		String[] getInfo = {"Borrower ID:"};
+		String[] getInfo = {"Sin/StNo:"};
 		String [] memory = null;
 		while (true) {
 			memory = createInputPopup(getInfo, "Validation", memory);
 			if(memory == null)
 				return;
 
-			bid = memory[0];
-			if (VerifyAttributes.verifyBID(bid) != null) {
-				makeErrorAlert(VerifyAttributes.verifyBID(bid));
+			sinOrStNo = memory[0];
+			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
+				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
 			} else {
 				// update unpaid fine tuples
 				try {
-					if (TransactionManager.hasFines(bid)) {
-						TransactionHelper.payFine(bid);
-						makeSuccessAlert("Fine successfully payed");
+					String fines = TransactionManager.hasFines(sinOrStNo);
+					if (!fines.isEmpty()) {
+						writeToOutputBox(fines);
+						TransactionHelper.payFine(sinOrStNo);
+						makeSuccessAlert("Fines successfully payed");
 					} else {
-						makeSuccessAlert("Borrower with ID " + bid + " "
+						makeSuccessAlert("Borrower with sinOrStNo " + sinOrStNo + " "
 								+ "has no outstanding fines");
 					}
 				} catch (TransactionException e) {

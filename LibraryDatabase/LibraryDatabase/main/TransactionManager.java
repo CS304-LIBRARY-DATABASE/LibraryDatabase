@@ -134,15 +134,16 @@ public class TransactionManager {
 	 * @param bid
 	 * @return
 	 */
-	public static String verifyBorrower(String bid) throws TransactionException {
+	public static String verifyBorrower(String sinOrStNo) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
 		String type = null;
+		String bid = null;
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'", stmt);
+			rs = executeQuery("SELECT * FROM Borrower where sinOrStNo = '" + sinOrStNo + "'", stmt);
 
 			if (rs.next()) {
 				bid = rs.getString(1);
@@ -497,13 +498,13 @@ public class TransactionManager {
 	}
 
 
-	public static void payFine(String bid) throws TransactionException {
+	public static void payFine(String sinOrStNo) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			ps = con.prepareStatement("Update Fine set paidDate = ? where fid in (select fid "
 					+ "from Borrower natural join Borrowing natural join Fine "
-					+ "where bid = '" + bid + "' and paidDate is null)");
+					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null)");
 
 			Calendar today = Calendar.getInstance();
 			ps.setDate(1, dateFromCalendar(today));
@@ -517,24 +518,23 @@ public class TransactionManager {
 	}
 
 
-	public static boolean hasFines(String bid) throws TransactionException {
+	public static String hasFines(String sinOrStNo) throws TransactionException {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
 
 			ResultSet rs = executeQuery("select callnumber, copyNo, outDate, inDate, "
-					+ "fid, amount "
+					+ "fid, amount, (select amount "
 					+ "from Borrower natural join Borrowing natural join Fine "
-					+ "where bid = '" + bid + "' and paidDate is null", stmt);
+					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null) as Total "
+					+ "from Borrower natural join Borrowing natural join Fine "
+					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
 
-			boolean finesExist = false;
-			if (rs.next()) {
-				finesExist = true;
-			}
+			String result = getDisplayString(rs);
 
 			rs.close();
 			stmt.close();
-			return finesExist;
+			return result;
 
 		} catch (SQLException e) {
 			System.out.println("checkFine Error: " + e.getMessage());
@@ -603,7 +603,7 @@ public class TransactionManager {
 		if(!subject.isEmpty()){
 			subjectFilter[0] = " subject,";
 			subjectFilter[1] = " NATURAL JOIN hasSubject";
-			subjectFilter[2] = " AND subject LIKE '" + subject + "'";
+			subjectFilter[2] = " AND subject LIKE '%" + subject + "%'";
 		}
 
 		try {
@@ -634,15 +634,18 @@ public class TransactionManager {
 	 * Place a hold request for a book that is out. When the item is returned, the system sends an email
 	 * to the borrower and informs the library clerk to keep the book out of the shelves.
 	 */
-	public static String holdRequest(String bid, String callNumber) {
+	public static String holdRequest(String sinOrStNo, String callNumber) {
 
 		String result = null;
-
+		String bid = null;
 		try {
-			verifyBorrower(bid);
+			// check if borrower is valid
+			String bidType = TransactionManager.verifyBorrower(sinOrStNo);
+			String [] spl = bidType.split(",");
+			bid = spl[0];
 		} catch (TransactionException e) {
 			e.printStackTrace();
-			result = "Could not find borrower with ID " + bid;
+			result = "Could not find borrower with sinOrStNo " + sinOrStNo;
 			return result;
 		}
 		try {
@@ -670,9 +673,6 @@ public class TransactionManager {
 
 			Calendar today = Calendar.getInstance();
 			ps.setDate(3, dateFromCalendar(today));
-
-
-
 			executeUpdate(ps, con);
 
 		} catch (Exception e) {
@@ -769,6 +769,7 @@ public class TransactionManager {
 					+ "upper(b.mainAuthor) like upper('%" + author + "%')", stmt);
 
 			String result = getDisplayString(rs);
+
 			rs.close();
 			stmt.close();
 			return result;
@@ -785,7 +786,8 @@ public class TransactionManager {
 		try {
 			Statement  stmt = con.createStatement();
 
-			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor, b.publisher, b.year, hs.subject, "
+			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor,"
+					+ "b.publisher, b.year, hs.subject, "
 					+ "(select count(*) from "
 					+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
 					+ "(select count(*) from "
@@ -797,12 +799,57 @@ public class TransactionManager {
 			rs.close();
 			stmt.close();
 			return result;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+	
+
+	public static String hasBooksOut(String sinOrStNo) throws TransactionException {
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			Statement stmt = con.createStatement();
+
+			ResultSet rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
+					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
+					+ " WHERE sinOrStNo = '" + sinOrStNo + "' and status = 'out'"
+					, stmt);
+			
+			String result = getDisplayString(rs);
+			rs.close();
+			stmt.close();
+			return result;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
+	}
+	
+	public static String hasHoldRequests(String sinOrStNo) throws TransactionException {
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			Statement stmt = con.createStatement();
+
+			ResultSet rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, hid, issuedDate "
+					+ " FROM Borrower NATURAL JOIN Book NATURAL JOIN HoldRequest"
+					+ " WHERE sinOrStNo = '" + sinOrStNo + "'"
+					, stmt);
+
+			String result = getDisplayString(rs);
+			rs.close();
+			stmt.close();
+			return result;
 
 		} catch (SQLException e) {
 			System.out.println("checkFine Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
 		}
 	}
+	
+	
 
 	public static String getDisplayString (ResultSet rs) throws SQLException, TransactionException{
 
@@ -812,10 +859,15 @@ public class TransactionManager {
 		String[] column = new String[numCols];
 
 		int [] columnTypes = new int[numCols];
+		int maxNameLength = 0;
 		// get column names;
 		for (int i = 0; i < numCols; i++) {
 			column[i] = rsmd.getColumnName(i+1);
 			columnTypes[i] = rsmd.getColumnType(i+1);
+			
+			if (column[i].length() > maxNameLength) {
+				maxNameLength = column[i].length();
+			}
 		}
 
 		String result = "";
@@ -825,6 +877,10 @@ public class TransactionManager {
 					+ "------------------------------------\n";
 			for (int i = 0; i < numCols; i++) {
 				result += column[i] + ": ";
+				// align with spaces
+				for (int j = 0; j < maxNameLength - column[i].length(); j++) {
+					result += "  ";
+				}
 
 				switch (columnTypes[i]) {
 				case Types.VARCHAR:
@@ -845,7 +901,7 @@ public class TransactionManager {
 				default:
 					throw new TransactionException("Error: unexpected type " +
 							columnTypes[i] + " encountered in"
-							+ " TransactionManager.listTableConents()");
+							+ " TransactionManager.getDisplayString()");
 				}
 			}
 			result = result.trim() + "\n";

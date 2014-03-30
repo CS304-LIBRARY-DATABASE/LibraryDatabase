@@ -74,7 +74,7 @@ create table HoldRequest
    (hid int not null primary key,
    bid int not null,
    callNumber char(20) not null,
-   issuedDate date,
+   issuedDate date not null,
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
             
@@ -90,8 +90,8 @@ create table Borrowing
    bid int not null,
    callNumber char(20) not null,
    copyNo char(4) not null,
-   outDate date null,
-   inDate date null,
+   outDate date null not null,
+   inDate date null not null,
    primary key (borid),
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber, copyNo) references BookCopy(callNumber, copyNo) ON DELETE CASCADE);
@@ -104,9 +104,9 @@ CACHE 10
                        
 create table Fine
    (fid int not null primary key,
-   amount float,
-   issuedDate date,
-   paidDate date,
+   amount float not null,
+   issuedDate date not null,
+   paidDate date null,
    borid int not null unique,
    foreign key (borid) references Borrowing(borid) ON DELETE CASCADE);
 
