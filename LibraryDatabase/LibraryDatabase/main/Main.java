@@ -472,7 +472,7 @@ public class Main extends JFrame implements ActionListener{
 		// TODO: check if borrower has outstanding fine, change afterwards
 		// TODO: check if there is hold request for book
 		// TODO: update all tuples
-		
+
 		// TODO: 	
 		/*
 		 * Place a hold request for a book that is out. When the item is returned, the system sends an email
@@ -490,15 +490,15 @@ public class Main extends JFrame implements ActionListener{
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
 		ArrayList<String> result;
-		
+
 		try {
 			result = TransactionManager.checkForOverdueBooks();
 			writeToOutputBox(result.get(0));
-			
-			
+
+
 			int q = JOptionPane.showOptionDialog(null, "Would you like to send out emails?", 
 					"Send emails", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
-			
+
 			result.remove(0);
 			if(!result.isEmpty() && q == 0)
 				OverdueReportFrame.open(result);
@@ -506,11 +506,6 @@ public class Main extends JFrame implements ActionListener{
 		} catch (TransactionException e) {
 			makeErrorAlert("Problem encountered, transaction aborted");
 		}
-		
-
-		
-		// TODO email borrowers
-
 	}
 
 	/*
@@ -641,7 +636,7 @@ public class Main extends JFrame implements ActionListener{
 		callNumber = input[1];
 
 		String result = TransactionManager.holdRequest(bid, callNumber);
-		
+
 		if(result == null)
 			makeSuccessAlert("Hold request successful.");
 		else
@@ -762,13 +757,13 @@ public class Main extends JFrame implements ActionListener{
 			return;
 
 		String result = "";
-		
+
 		try {
 			result = TransactionManager.checkoutReport(response[0]);
 		} catch (TransactionException e) {
 			makeErrorAlert("Problem encountered, transaction aborted");
 		}
-		
+
 		writeToOutputBox(result);
 	}
 
@@ -780,42 +775,36 @@ public class Main extends JFrame implements ActionListener{
 	private void popularBooks() {
 		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
-		int year;
-		int n;
+		String year;
+		String n;
 
+		String[] memory = null;
 
 		while(true){
 			String[] response = {"Year", "# of Results"};
-			response = createInputPopup(response, "Find popular items", null);
+			memory = createInputPopup(response, "Find popular items", memory);
 
-			if(response == null)
+			if(memory == null)
 				return;
 
-			try{
-				year = Integer.valueOf(response[0]);
-
-				if(year < 0){
-					JOptionPane.showMessageDialog(null, "Please enter a positive year.", "Invalid input", JOptionPane.ERROR_MESSAGE);
-					continue;
-				}
-
-				n = Integer.valueOf(response[1]);
-
-				if(n < 0){
-					JOptionPane.showMessageDialog(null, "Please enter a positive value for results.", "Invalid input", JOptionPane.ERROR_MESSAGE);
-					continue;
-				}
-
-				break;
-			}
-			catch (Exception e){
-				JOptionPane.showMessageDialog(null, "Please enter numerical values.", "Invalid input", JOptionPane.ERROR_MESSAGE);
-			}
+			year = memory[0];
+			n = memory[1];
+			
+			if(VerifyAttributes.verifyYear(year, 2) != null)
+				makeErrorAlert(VerifyAttributes.verifyYear(year, 2));
+			else if(!VerifyAttributes.verifyInteger(n) || Integer.valueOf(n) <= 0)
+				makeErrorAlert("Please enter a value greater than 0 for # of results.");
+			else
+				break;				
 		}
 
-		//TODO: query for top books
-		//TODO: display top books
-
+		try {
+			String result = TransactionManager.popularBooks(year, n);
+			writeToOutputBox(result);
+		} catch (TransactionException e) {
+			makeErrorAlert("Problem encountered, transaction aborted");
+		}
+			
 	}
 
 

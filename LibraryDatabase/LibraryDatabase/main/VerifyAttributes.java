@@ -266,7 +266,10 @@ public class VerifyAttributes {
 			return ERROR_PATTERN + "Year field is empty";
 		
 		if(year.length() != 4 || !verifyInteger(year))
-			return ERROR_PATTERN + "Year must be 4 digits";
+			return ERROR_PATTERN + "Year must be 4 characters";
+		
+		if(Integer.parseInt(year) < 0)
+			return ERROR_PATTERN + "Year must be positive";
 		
 		Calendar today = Calendar.getInstance();
 		Calendar date = Calendar.getInstance();

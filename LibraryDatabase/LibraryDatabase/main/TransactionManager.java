@@ -219,7 +219,6 @@ public class TransactionManager {
 	}
 
 
-	@SuppressWarnings("deprecation")
 	public static String checkoutBook(String callNumber, String bid, String copyNo, String type) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
@@ -530,7 +529,7 @@ public class TransactionManager {
 	public static String holdRequest(String bid, String callNumber) {
 
 		String result = null;
-		
+
 		try {
 			verifyBorrower(bid);
 		} catch (TransactionException e) {
@@ -544,18 +543,14 @@ public class TransactionManager {
 				result = "Book copy " + available + " is currently available. Cannot issue hold request.";
 				return result;
 			}
-			
+
 		} catch (TransactionException e) {
 			e.printStackTrace();
 			result = "Could not find book with call number " + callNumber;
 			return result;
 		}
-		
-		
-		Statement  stmt;
-		Connection con = DbConnection.getJDBCConnection();
-	
 
+		Connection con = DbConnection.getJDBCConnection();
 		PreparedStatement ps = null;
 
 		try {
@@ -578,6 +573,46 @@ public class TransactionManager {
 		}
 
 		return result;
+	}
+
+	/*
+	 * Generate a report with the most popular items in a given year. The librarian provides a year and
+	 * a number n. The system lists out the top n books that where borrowed the most times during that year.
+	 * The books are ordered by the number of times they were borrowed.
+	 */
+	public static String popularBooks(String year, String n) throws TransactionException {
+		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
+		//Book (callNumber, isbn, title, mainAuthor, publisher, year )
+
+		Statement  stmt;
+		ResultSet  rs;
+		String result = "";
+
+		System.out.println(year);
+		
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			stmt = con.createStatement();
+
+			rs = executeQuery("SELECT callNumber, title, mainAuthor, year, COUNT(callNumber) AS count" 
+					+ " FROM Borrowing NATURAL JOIN Book" 
+					+ " WHERE ROWNUM <= " + n
+					+ " AND year LIKE " + year
+					+ " GROUP BY callNumber, title, mainAuthor, year"
+					+ " ORDER BY count DESC"
+					, stmt);
+
+			result = getDisplayString(rs);
+
+			// close the statement; 
+			// the ResultSet will also be closed
+			stmt.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new TransactionException();
+		}
+		return result;	
+
 	}
 
 
