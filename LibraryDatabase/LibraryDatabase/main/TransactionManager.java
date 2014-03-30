@@ -503,8 +503,8 @@ public class TransactionManager {
 			stmt = con.createStatement();
 
 			rs = executeQuery("SELECT DISTINCT callNumber, outDate, inDate," + subjectFilter[0]
-					+ " CASE WHEN inDate < SYSDATE THEN '******'"
-					+      " WHEN inDate >= SYSDATE THEN ''"
+					+ " CASE WHEN inDate < SYSDATE THEN '***yes***'"
+					+      " WHEN inDate >= SYSDATE THEN 'no'"
 					+      " END AS Overdue"
 					+ " FROM Borrowing NATURAL JOIN BookCopy" + subjectFilter[1]
 							+ " WHERE status = 'out'" + subjectFilter[2]
@@ -663,39 +663,41 @@ public class TransactionManager {
 
 	public static String getDisplayString (ResultSet rs) throws SQLException, TransactionException{
 
-		String result = "";
-
 		// get info on ResultSet
 		ResultSetMetaData rsmd = rs.getMetaData();
 		int numCols = rsmd.getColumnCount();
+		String[] column = new String[numCols];
 
 		int [] columnTypes = new int[numCols];
-		result += "| ";
 		// get column names;
 		for (int i = 0; i < numCols; i++) {
-			result += rsmd.getColumnName(i+1) + " | ";
+			column[i] = rsmd.getColumnName(i+1);
 			columnTypes[i] = rsmd.getColumnType(i+1);
 		}
-		result = result.trim() + "\n";
-
+		
+		String result = "";
+		
 		while(rs.next()) {
-			result += "| ";
+			result += "------------------------------------"
+					+ "------------------------------------\n";
 			for (int i = 0; i < numCols; i++) {
+				result += column[i] + ": ";
+						
 				switch (columnTypes[i]) {
 				case Types.VARCHAR:
 				case Types.CHAR:
-					result += rs.getString(i+1) + " | ";
+					result += rs.getString(i+1) + "\n";
 					break;
 				case Types.INTEGER:
 				case Types.NUMERIC:
-					result += rs.getInt(i+1) + " | ";
+					result += rs.getInt(i+1) + "\n";
 					break;
 				case Types.FLOAT:
 				case Types.DOUBLE:
-					result += rs.getDouble(i+1) + " | ";
+					result += rs.getDouble(i+1) + "\n";
 					break;
 				case Types.DATE:
-					result += rs.getDate(i+1) + " | ";
+					result += rs.getDate(i+1) + "\n";
 					break;
 				default:
 					throw new TransactionException("Error: unexpected type " +

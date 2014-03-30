@@ -46,7 +46,7 @@ public class Main extends JFrame implements ActionListener{
 
 	public static void init() {
 		app.setLocation(100, 100);
-		app.setSize(700, 310);
+		app.setSize(700, 401);
 
 		app.setVisible
 		(true);
@@ -58,7 +58,7 @@ public class Main extends JFrame implements ActionListener{
 		app.add(clerkInterface(), BorderLayout.WEST);
 		app.add(borrowerInterface(), BorderLayout.CENTER);
 		app.add(librarianInterface(), BorderLayout.EAST);
-		app.add(generalInterface(), BorderLayout.SOUTH);
+		app.add(generalInterface(), BorderLayout.NORTH);
 
 		WindowListener exitListener = new WindowListener() {
 
@@ -89,7 +89,7 @@ public class Main extends JFrame implements ActionListener{
 		app.addWindowListener(exitListener);
 
 
-		app.setSize(700, 600);
+		app.setSize(700, 500);
 		app.repaint();
 	}
 
@@ -108,14 +108,6 @@ public class Main extends JFrame implements ActionListener{
 		Button addNewBorrower = new Button(ADD_BORROWER_NAME);
 		addNewBorrower.addActionListener(app);
 		panel.add(addNewBorrower);
-
-		Button listTableContents = new Button(LIST_TABLE_CONTENTS);
-		listTableContents.addActionListener(app);
-		panel.add(listTableContents);
-
-		Button queryButton = new Button(EXECUTE_QUERY);
-		queryButton.addActionListener(app);
-		panel.add(queryButton);
 
 		Button checkOut = new Button(CHECK_OUT_NAME);
 		checkOut.addActionListener(app);
@@ -200,17 +192,26 @@ public class Main extends JFrame implements ActionListener{
 
 	private static JPanel generalInterface(){
 		JPanel panel = new JPanel();
-
+		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+		
 		TitledBorder title;
 		title = BorderFactory.createTitledBorder("Output");
 		panel.setBorder(title);
 
+		Button listTableContents = new Button(LIST_TABLE_CONTENTS);
+		listTableContents.addActionListener(app);
+		panel.add(listTableContents);
+
+		Button queryButton = new Button(EXECUTE_QUERY);
+		queryButton.addActionListener(app);
+		panel.add(queryButton);
+		
 		box = new JTextArea();
 		JScrollPane scroll = new JScrollPane(box);
 
-		box.setSize(100, 300);
+		box.setSize(500, 500);
 		box.setColumns(60);
-		box.setRows(16);
+		box.setRows(12);
 		box.setAutoscrolls(true);
 		box.setEditable(false);
 
@@ -493,6 +494,12 @@ public class Main extends JFrame implements ActionListener{
 
 		try {
 			result = TransactionManager.checkForOverdueBooks();
+			
+			if(result.get(0).isEmpty()){
+				makeSuccessAlert("There are no overdue books!");
+				return;
+			}
+			
 			writeToOutputBox(result.get(0));
 
 
