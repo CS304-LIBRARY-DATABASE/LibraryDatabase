@@ -626,7 +626,7 @@ public class Main extends JFrame implements ActionListener{
 	 * to the borrower and informs the library clerk to keep the book out of the shelves.
 	 */
 	private void holdRequest() {
-		//HoldRequest(hid, bid, callNumber, issuedDate)
+		//HoldRequest(hid, bid, callNumber, issuedDate) 
 
 		String bid;
 		String callNumber;
