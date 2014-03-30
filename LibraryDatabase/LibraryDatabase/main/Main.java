@@ -641,12 +641,12 @@ public class Main extends JFrame implements ActionListener{
 					String fines = TransactionManager.hasFines(sinOrStNo);
 					if (!fines.isEmpty()) {
 						// borrower has pending fines
-						output += "Outstanding Fines:\n" + fines;
+						output += "\n\n\nOutstanding Fines:\n" + fines;
 					}
 					String holdRequests = TransactionHelper.hasHoldRequests(sinOrStNo);
 					if (!holdRequests.isEmpty()) {
 						// borrower has pending fines
-						output += "Hold Requests:\n" + holdRequests;
+						output += "\n\n\nHold Requests:\n" + holdRequests;
 					}
 					writeToOutputBox(output);
 				} catch (TransactionException e) {
