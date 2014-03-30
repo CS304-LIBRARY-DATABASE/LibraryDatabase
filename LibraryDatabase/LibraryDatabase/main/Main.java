@@ -411,7 +411,7 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 		String[] properties = new String[1 + n];
-		properties[0] = "sinOrStNo:";
+		properties[0] = "Borrower ID:";
 
 		for(int i = 1; i <= n; i++) {
 			properties[i] = "Callnumber #" + String.valueOf(i);
@@ -425,9 +425,9 @@ public class Main extends JFrame implements ActionListener{
 				return;
 
 			// verify borrower
-			String sinOrStNo =  memory[0];
-			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
-				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
+			String bid =  memory[0];
+			if (VerifyAttributes.verifyBID(bid) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBID(bid));
 			}
 			else {
 				// verify callnumbers
@@ -441,7 +441,7 @@ public class Main extends JFrame implements ActionListener{
 				}
 				if (valid) {
 					// checkout books
-					TransactionHelper.checkout(memory, sinOrStNo);
+					TransactionHelper.checkout(memory, bid);
 					break;
 				}
 			}
@@ -472,6 +472,12 @@ public class Main extends JFrame implements ActionListener{
 		// TODO: check if borrower has outstanding fine, change afterwards
 		// TODO: check if there is hold request for book
 		// TODO: update all tuples
+		
+		// TODO: 	
+		/*
+		 * Place a hold request for a book that is out. When the item is returned, the system sends an email
+		 * to the borrower and informs the library clerk to keep the book out of the shelves.
+		 */
 
 	}
 
@@ -489,8 +495,12 @@ public class Main extends JFrame implements ActionListener{
 			result = TransactionManager.checkForOverdueBooks();
 			writeToOutputBox(result.get(0));
 			
+			
+			int q = JOptionPane.showOptionDialog(null, "Would you like to send out emails?", 
+					"Send emails", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+			
 			result.remove(0);
-			if(!result.isEmpty())
+			if(!result.isEmpty() && q == 0)
 				OverdueReportFrame.open(result);
 
 		} catch (TransactionException e) {
@@ -507,6 +517,7 @@ public class Main extends JFrame implements ActionListener{
 	 * Search for books using keyword search on titles, authors and subjects. The result is a 
 	 * list of books that match the search together with the number of copies that are in and out.
 	 */
+	@SuppressWarnings("static-access")
 	private void search() {
 		//Book (callNumber, isbn, title, mainAuthor, publisher, year )
 		//HasAuthor (callNumber, name)
@@ -615,22 +626,26 @@ public class Main extends JFrame implements ActionListener{
 	 * to the borrower and informs the library clerk to keep the book out of the shelves.
 	 */
 	private void holdRequest() {
-		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
 		//HoldRequest(hid, bid, callNumber, issuedDate)
-		//BookCopy (callNumber, copyNo, status)
 
+		String bid;
 		String callNumber;
 
-		String[] book = {"Call #"};
-		book = createInputPopup(book, "Hold request", null);
+		String[] input = {"Borrower ID", "Call #"};
+		input = createInputPopup(input, "Hold request", null);
 
-		if(book == null)
+		if(input == null)
 			return;
 
-		callNumber = book[0];
+		bid = input[0];
+		callNumber = input[1];
 
-		//TODO: verify book exists and is out
-		//TODO: place hold request
+		String result = TransactionManager.holdRequest(bid, callNumber);
+		
+		if(result == null)
+			makeSuccessAlert("Hold request successful.");
+		else
+			makeErrorAlert(result);
 	}
 
 	/*
@@ -639,26 +654,26 @@ public class Main extends JFrame implements ActionListener{
 	private void payFine() {
 		//Borrower (bid, password, name, address, phone, emailAddress, sinOrStNo, expiryDate, type)
 
-		String sinOrStNo;
+		String bid;
 
-		String[] getInfo = {"Sin/Student Number:"};
+		String[] getInfo = {"Borrower ID:"};
 		String [] memory = null;
 		while (true) {
 			memory = createInputPopup(getInfo, "Validation", memory);
 			if(memory == null)
 				return;
 
-			sinOrStNo = memory[0];
-			if (VerifyAttributes.verifySinOrStNo(sinOrStNo) != null) {
-				makeErrorAlert(VerifyAttributes.verifySinOrStNo(sinOrStNo));
+			bid = memory[0];
+			if (VerifyAttributes.verifyBID(bid) != null) {
+				makeErrorAlert(VerifyAttributes.verifyBID(bid));
 			} else {
 				// update unpaid fine tuples
 				try {
-					if (TransactionManager.hasFines(sinOrStNo)) {
-						TransactionHelper.payFine(sinOrStNo);
+					if (TransactionManager.hasFines(bid)) {
+						TransactionHelper.payFine(bid);
 						makeSuccessAlert("Fine successfully payed");
 					} else {
-						makeSuccessAlert("Borrower with Sin/Student Number " + sinOrStNo + " "
+						makeSuccessAlert("Borrower with ID " + bid + " "
 								+ "has no outstanding fines");
 					}
 				} catch (TransactionException e) {

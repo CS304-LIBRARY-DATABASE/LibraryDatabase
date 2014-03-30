@@ -132,16 +132,15 @@ public class TransactionManager {
 	 * @param bid
 	 * @return
 	 */
-	public static String verifyBorrower(String sinOrStNo) throws TransactionException {
+	public static String verifyBorrower(String bid) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
 		String type = null;
-		String bid = null;
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT * FROM Borrower b where b.sinOrStNo = '" + sinOrStNo + "'", stmt);
+			rs = executeQuery("SELECT * FROM Borrower b where b.bid = '" + bid + "'", stmt);
 
 			if (rs.next()) {
 				bid = rs.getString(1);
@@ -149,18 +148,18 @@ public class TransactionManager {
 				Date expiryDate = rs.getDate(8);
 				// borrower has expired
 				if (expiryDate.before(new java.util.Date())) {
-					throw new TransactionException("Borrower with sinOrStNo " + sinOrStNo + " has a"
+					throw new TransactionException("Borrower with ID " + bid + " has a"
 							+ " past expiry date of " + expiryDate.toString());
 				}
 			}
 			// no borrowers with bid found
 			else {
-				throw new TransactionException("Borrower with sinOrStNo " + sinOrStNo + " does not exist");
+				throw new TransactionException("Borrower with ID " + bid + " does not exist");
 			}
 			rs.close();
 			rs = executeQuery("SELECT callNumber, copyNo, amount"
 					+ " FROM Borrower natural join Borrowing natural join Fine"
-					+ " where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
+					+ " where bid = '" + bid + "' and paidDate is null", stmt);
 			String error = "";
 			int i=0;
 			while (rs.next()) {
@@ -391,13 +390,13 @@ public class TransactionManager {
 	}
 
 
-	public static void payFine(String sinOrStNo) throws TransactionException {
+	public static void payFine(String bid) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			ps = con.prepareStatement("Update Fine set paidDate = ? where fid in (select fid "
 					+ "from Borrower natural join Borrowing natural join Fine "
-					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null)");
+					+ "where bid = '" + bid + "' and paidDate is null)");
 
 			Calendar today = Calendar.getInstance();
 			ps.setDate(1, dateFromCalendar(today));
@@ -411,7 +410,7 @@ public class TransactionManager {
 	}
 
 
-	public static boolean hasFines(String sinOrStNo) throws TransactionException {
+	public static boolean hasFines(String bid) throws TransactionException {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
@@ -419,7 +418,7 @@ public class TransactionManager {
 			ResultSet rs = executeQuery("select callnumber, copyNo, outDate, inDate, "
 					+ "fid, amount "
 					+ "from Borrower natural join Borrowing natural join Fine "
-					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
+					+ "where bid = '" + bid + "' and paidDate is null", stmt);
 
 			boolean finesExist = false;
 			if (rs.next()) {
@@ -449,37 +448,35 @@ public class TransactionManager {
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
-			
+
 			rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
 					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
 					+ " WHERE status = 'out'"
-				//	+ " AND inDate < SYSDATE"
+					+ " AND inDate < SYSDATE"
 					, stmt);
 
 			result.add(getDisplayString(rs));
-			
-			
+
+
 			rs = executeQuery("SELECT DISTINCT bid, emailAddress"
 					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
 					+ " WHERE status = 'out'"
-					//+ " AND inDate < SYSDATE"
+					+ " AND inDate < SYSDATE"
 					, stmt);
-			
-				
+
+
 			while(rs.next())
 				result.add(rs.getString(2).trim());
-						
+
 
 			// close the statement; 
 			// the ResultSet will also be closed
 			stmt.close();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-		} catch (TransactionException e) {
-			e.printStackTrace();
-			throw e;
+			throw new TransactionException();
 		}
-		
+
 		return result;	
 	}
 
@@ -519,13 +516,68 @@ public class TransactionManager {
 			// close the statement; 
 			// the ResultSet will also be closed
 			stmt.close();
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
-		} catch (TransactionException e) {
-			e.printStackTrace();
-			throw e;
+			throw new TransactionException();
 		}
 		return result;	
+	}
+
+	/*
+	 * Place a hold request for a book that is out. When the item is returned, the system sends an email
+	 * to the borrower and informs the library clerk to keep the book out of the shelves.
+	 */
+	public static String holdRequest(String bid, String callNumber) {
+
+		String result = null;
+		
+		try {
+			verifyBorrower(bid);
+		} catch (TransactionException e) {
+			e.printStackTrace();
+			result = "Could not find borrower with ID " + bid;
+			return result;
+		}
+		try {
+			String available = checkAvailability(callNumber);
+			if(available != null){
+				result = "Book copy " + available + " is currently available. Cannot issue hold request.";
+				return result;
+			}
+			
+		} catch (TransactionException e) {
+			e.printStackTrace();
+			result = "Could not find book with call number " + callNumber;
+			return result;
+		}
+		
+		
+		Statement  stmt;
+		Connection con = DbConnection.getJDBCConnection();
+	
+
+		PreparedStatement ps = null;
+
+		try {
+			//HoldRequest(hid, bid, callNumber, issuedDate)
+			ps = con.prepareStatement("INSERT INTO HoldRequest VALUES (hid_sequence.nextval,?,?,?)");
+
+			ps.setString(1, bid);
+			ps.setString(2, callNumber);
+
+			Calendar today = Calendar.getInstance();
+			ps.setDate(3, dateFromCalendar(today));
+
+
+
+			executeUpdate(ps, con);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = "Transaction failed, please try again.";
+		}
+
+		return result;
 	}
 
 

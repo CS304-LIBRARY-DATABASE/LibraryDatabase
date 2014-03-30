@@ -5,14 +5,12 @@ import java.util.ArrayList;
 
 public class TransactionHelper {
 
-	public static void checkout(String [] properties, String sinOrStNo) {
+	public static void checkout(String [] properties, String bid) {
 		String type = null;
-		String bid = null;
 		try {
 			// check if borrower is valid
-			String bidType = TransactionManager.verifyBorrower(sinOrStNo);
+			String bidType = TransactionManager.verifyBorrower(bid);
 			String [] spl = bidType.split(",");
-			bid = spl[0];
 			type = spl[1];
 		} catch (TransactionException e) {
 			Main.makeErrorAlert(e.getMessage());
@@ -79,8 +77,8 @@ public class TransactionHelper {
 		return result;
 	}
 
-	public static void payFine(String sinOrStNo) throws TransactionException {
-		TransactionManager.payFine(sinOrStNo);
+	public static void payFine(String bid) throws TransactionException {
+		TransactionManager.payFine(bid);
 	}
 
 
