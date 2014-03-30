@@ -210,7 +210,7 @@ public class VerifyAttributes {
 		if(isEmpty(copyNumber))
 			return ERROR_PATTERN + "Copy number field is empty";
 						
-		if (!copyNumber.startsWith("C")) 
+		if (!copyNumber.startsWith("C") && !copyNumber.startsWith("c")) 
 			return ERROR_PATTERN + "Copy number must begin with a 'C'";
 
 		return null;

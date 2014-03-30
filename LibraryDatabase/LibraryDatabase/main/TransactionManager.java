@@ -4,12 +4,9 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -25,7 +22,7 @@ public class TransactionManager {
 	 * @param con
 	 * @return
 	 */
-	private static int executeUpdate(PreparedStatement  ps, Connection con) throws TransactionException {
+	public static int executeUpdate(PreparedStatement  ps, Connection con) throws TransactionException {
 		try {
 			int rowCount = ps.executeUpdate();
 
@@ -51,7 +48,7 @@ public class TransactionManager {
 	}
 
 
-	private static ResultSet executeQuery(String query, Statement stmt) throws TransactionException {
+	public static ResultSet executeQuery(String query, Statement stmt) throws TransactionException {
 		try {
 			return stmt.executeQuery(query);
 
@@ -91,7 +88,7 @@ public class TransactionManager {
 			ps.setString(5, attributes[4]);
 			ps.setString(6, attributes[5]);
 
-			ps.setDate(7, dateFromString(attributes[6]));
+			ps.setDate(7, TransactionHelper.dateFromString(attributes[6]));
 			ps.setString(8, attributes[7].toLowerCase());
 
 			executeUpdate(ps, con);
@@ -117,7 +114,7 @@ public class TransactionManager {
 
 			rs = executeQuery("SELECT * FROM " + tableName, stmt);
 
-			result = getDisplayString(rs);
+			result = TransactionHelper.getDisplayString(rs);
 
 			// close the statement; 
 			// the ResultSet will also be closed
@@ -191,37 +188,6 @@ public class TransactionManager {
 		return bid.trim() + "," + type.trim();
 	}
 
-
-	/**
-	 * Checks if a copy of a book with given callNumber is "in"
-	 * @param callNumber
-	 * @return copyNumber of the copy if there is a copy with status "in", null otherwise
-	 * @throws TransactionException
-	 */
-	public static String checkAvailability(String callNumber) throws TransactionException {
-		Statement  stmt;
-		ResultSet  rs;
-		String copyNo = null;
-		try {
-			Connection con = DbConnection.getJDBCConnection();
-
-			stmt = con.createStatement();
-
-			rs = executeQuery("SELECT copyNo FROM BookCopy "
-					+ "where callNumber = '" + callNumber + "' AND status = 'in'", stmt);
-			if(rs.next())
-				copyNo = rs.getString(1);
-
-			rs.close();
-			stmt.close();
-			return copyNo;
-
-		} catch (SQLException ex) {
-			throw new TransactionException("Error: " + ex.getMessage());
-		}
-	}
-
-
 	public static String checkoutBook(String callNumber, String bid, String copyNo, String type) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
@@ -249,14 +215,14 @@ public class TransactionManager {
 				System.err.println("Error, unexpected borrower type: " + type);
 				System.exit(1);
 			}
-			ps.setDate(4, dateFromCalendar(today));
-			ps.setDate(5, dateFromCalendar(inDate));
+			ps.setDate(4, TransactionHelper.dateFromCalendar(today));
+			ps.setDate(5, TransactionHelper.dateFromCalendar(inDate));
 
 			executeUpdate(ps, con);
 
 			result += "| " + callNumber + " | ";
 			result += copyNo + " | ";
-			result +=  dateFromCalendar(inDate) + " |\n";
+			result +=  TransactionHelper.dateFromCalendar(inDate) + " |\n";
 
 		} catch (SQLException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
@@ -281,7 +247,6 @@ public class TransactionManager {
 		//HoldRequest(hid, bid, callNumber, issuedDate)
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
-		String result = null;
 		Connection con = DbConnection.getJDBCConnection();
 
 		try {
@@ -291,56 +256,118 @@ public class TransactionManager {
 			return "Could not find book " + callNumber + " " + copyNumber;
 		}
 
-		String bid = "";
 		Date inDate;
+		int borid;
 
 		Statement  stmt;
 		ResultSet  rs;
 		try {
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT bid, inDate"
+			rs = executeQuery("SELECT inDate, borid"
 					+ " FROM Borrowing"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " AND copyNo = '" + copyNumber + "'", stmt);
 
-			bid = rs.getString(1);
-			inDate = rs.getDate(2);
+			if(rs.next()){
+				inDate = rs.getDate(1);
+				borid = rs.getInt(2);
+			}
+			else throw new TransactionException();
 
 			rs.close();
 			stmt.close();
 
 		}catch (Exception e){
+			e.printStackTrace();
 			return "Could not find borrower who is taking out this book.";
 		}
 
-		Date today = dateFromCalendar(Calendar.getInstance());
-		
+		Date today = TransactionHelper.dateFromCalendar(Calendar.getInstance());
+
 		if(inDate.before(today)){
+
 			JOptionPane.showMessageDialog(null, "Assessing fine for late return.", "Overdue book", JOptionPane.INFORMATION_MESSAGE);
-			
-			
+
 			try {
 				PreparedStatement ps = con.prepareStatement("INSERT INTO Fine VALUES (fid_sequence.nextval,?,?,?,?)");
-				
-				//ps.setString(1, x);
-				
-				
-			} catch (SQLException e) {
+
+				ps.setFloat(1, (float) 5.25);
+				ps.setDate(2, today);
+				ps.setDate(3, null);
+				ps.setInt(4, borid);
+
+				executeUpdate(ps, con);
+
+			} catch (Exception e) {
 				e.printStackTrace();
 				return "Unable to insert fine tuple.";
 			}
+		}
 
+		try {
+			PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'in'"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " AND copyNo = '" + copyNumber + "'");
+			
+			executeUpdate(ps, con);
 
-
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "Unable to update status of book copy to 'in'.";
 		}
 		
+		/*
+		 * Hold request for a book that is out: When the item is returned, the system sends an email
+		 * to the borrower and informs the library clerk to keep the book out of the shelves.
+		 */
+
+		try {
+			stmt = con.createStatement();
+
+			rs = executeQuery("SELECT emailAddress"
+					+ " FROM HoldRequest NATURAL JOIN Borrower"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " ORDER BY issuedDate", stmt);
+
+			String[] emailList = new String[1];
+			if(rs.next()){
+				emailList[0] = rs.getString(1);
+				
+				
+				String emailSubject = "Library - Your book is on hold";
+				String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
+						" that you have placed a hold request on is now available. Please pick it up at your convenience."
+						+ "\n \n Thanks, \nLocal Library 304 Staff";
+				
+				EmailHandler.sendEmail(emailList, emailSubject, emailBody);
+
+				JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
+
+				
+				try {
+					PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
+							+ " WHERE callNumber = '" + callNumber + "'"
+							+ " AND copyNo = '" + copyNumber + "'");
+					
+					executeUpdate(ps, con);
+
+				} catch (Exception e) {
+					e.printStackTrace();
+					return "Unable to update status of book copy to 'on-hold'.";
+				}
+			
+			}
+
+			rs.close();
+			stmt.close();
+						
+		}catch (Exception e){
+			e.printStackTrace();
+			return "Could not email borrowers with hold requests.";
+		}
 		
-		
-		
-		
-		
-		return result;
+		return null;
 	}
 
 
@@ -507,7 +534,7 @@ public class TransactionManager {
 					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null)");
 
 			Calendar today = Calendar.getInstance();
-			ps.setDate(1, dateFromCalendar(today));
+			ps.setDate(1, TransactionHelper.dateFromCalendar(today));
 
 			executeUpdate(ps, con);
 
@@ -530,7 +557,7 @@ public class TransactionManager {
 					+ "from Borrower natural join Borrowing natural join Fine "
 					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
 
-			String result = getDisplayString(rs);
+			String result = TransactionHelper.getDisplayString(rs);
 
 			rs.close();
 			stmt.close();
@@ -562,7 +589,7 @@ public class TransactionManager {
 					+ " AND inDate < SYSDATE"
 					, stmt);
 
-			result.add(getDisplayString(rs));
+			result.add(TransactionHelper.getDisplayString(rs));
 
 
 			rs = executeQuery("SELECT DISTINCT bid, emailAddress"
@@ -618,7 +645,7 @@ public class TransactionManager {
 							+ " WHERE status = 'out'" + subjectFilter[2]
 									+ " ORDER BY callNumber", stmt);
 
-			result = getDisplayString(rs);
+			result = TransactionHelper.getDisplayString(rs);
 
 			// close the statement; 
 			// the ResultSet will also be closed
@@ -649,7 +676,7 @@ public class TransactionManager {
 			return result;
 		}
 		try {
-			String available = checkAvailability(callNumber);
+			String available = TransactionHelper.checkAvailability(callNumber);
 			if(available != null){
 				result = "Book copy " + available + " is currently available. Cannot issue hold request.";
 				return result;
@@ -672,7 +699,7 @@ public class TransactionManager {
 			ps.setString(2, callNumber);
 
 			Calendar today = Calendar.getInstance();
-			ps.setDate(3, dateFromCalendar(today));
+			ps.setDate(3, TransactionHelper.dateFromCalendar(today));
 			executeUpdate(ps, con);
 
 		} catch (Exception e) {
@@ -710,7 +737,7 @@ public class TransactionManager {
 					+ " ORDER BY count DESC"
 					, stmt);
 
-			result = getDisplayString(rs);
+			result = TransactionHelper.getDisplayString(rs);
 
 			// close the statement; 
 			// the ResultSet will also be closed
@@ -742,7 +769,7 @@ public class TransactionManager {
 					+ "from Book b "
 					+ "where upper(title) like upper('%" + title + "%')", stmt);
 
-			String result = getDisplayString(rs);
+			String result = TransactionHelper.getDisplayString(rs);
 			rs.close();
 			stmt.close();
 			return result;
@@ -768,7 +795,7 @@ public class TransactionManager {
 					+ "where (b.callNumber = ha.callNumber and upper(ha.name) like upper('%" + author + "%')) or "
 					+ "upper(b.mainAuthor) like upper('%" + author + "%')", stmt);
 
-			String result = getDisplayString(rs);
+			String result = TransactionHelper.getDisplayString(rs);
 
 			rs.close();
 			stmt.close();
@@ -795,50 +822,7 @@ public class TransactionManager {
 					+ "from Book b, HasSubject hs "
 					+ "where b.callNumber = hs.callNumber and upper(hs.subject) like upper('%" + subject + "%')", stmt);
 
-			String result = getDisplayString(rs);
-			rs.close();
-			stmt.close();
-			return result;
-			
-		} catch (SQLException e) {
-			System.out.println("checkFine Error: " + e.getMessage());
-			throw new TransactionException("Error: " + e.getMessage());
-		}
-	}
-	
-
-	public static String hasBooksOut(String sinOrStNo) throws TransactionException {
-		try {
-			Connection con = DbConnection.getJDBCConnection();
-			Statement stmt = con.createStatement();
-
-			ResultSet rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
-					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
-					+ " WHERE sinOrStNo = '" + sinOrStNo + "' and status = 'out'"
-					, stmt);
-			
-			String result = getDisplayString(rs);
-			rs.close();
-			stmt.close();
-			return result;
-			
-		} catch (SQLException e) {
-			System.out.println("checkFine Error: " + e.getMessage());
-			throw new TransactionException("Error: " + e.getMessage());
-		}
-	}
-	
-	public static String hasHoldRequests(String sinOrStNo) throws TransactionException {
-		try {
-			Connection con = DbConnection.getJDBCConnection();
-			Statement stmt = con.createStatement();
-
-			ResultSet rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, hid, issuedDate "
-					+ " FROM Borrower NATURAL JOIN Book NATURAL JOIN HoldRequest"
-					+ " WHERE sinOrStNo = '" + sinOrStNo + "'"
-					, stmt);
-
-			String result = getDisplayString(rs);
+			String result = TransactionHelper.getDisplayString(rs);
 			rs.close();
 			stmt.close();
 			return result;
@@ -848,82 +832,5 @@ public class TransactionManager {
 			throw new TransactionException("Error: " + e.getMessage());
 		}
 	}
-	
-	
 
-	public static String getDisplayString (ResultSet rs) throws SQLException, TransactionException{
-
-		// get info on ResultSet
-		ResultSetMetaData rsmd = rs.getMetaData();
-		int numCols = rsmd.getColumnCount();
-		String[] column = new String[numCols];
-
-		int [] columnTypes = new int[numCols];
-		int maxNameLength = 0;
-		// get column names;
-		for (int i = 0; i < numCols; i++) {
-			column[i] = rsmd.getColumnName(i+1);
-			columnTypes[i] = rsmd.getColumnType(i+1);
-			
-			if (column[i].length() > maxNameLength) {
-				maxNameLength = column[i].length();
-			}
-		}
-
-		String result = "";
-
-		while(rs.next()) {
-			result += "------------------------------------"
-					+ "------------------------------------\n";
-			for (int i = 0; i < numCols; i++) {
-				result += column[i] + ": ";
-				// align with spaces
-				for (int j = 0; j < maxNameLength - column[i].length(); j++) {
-					result += "  ";
-				}
-
-				switch (columnTypes[i]) {
-				case Types.VARCHAR:
-				case Types.CHAR:
-					result += rs.getString(i+1) + "\n";
-					break;
-				case Types.INTEGER:
-				case Types.NUMERIC:
-					result += rs.getInt(i+1) + "\n";
-					break;
-				case Types.FLOAT:
-				case Types.DOUBLE:
-					result += rs.getDouble(i+1) + "\n";
-					break;
-				case Types.DATE:
-					result += rs.getDate(i+1) + "\n";
-					break;
-				default:
-					throw new TransactionException("Error: unexpected type " +
-							columnTypes[i] + " encountered in"
-							+ " TransactionManager.getDisplayString()");
-				}
-			}
-			result = result.trim() + "\n";
-		}
-
-		return result;
-	}
-
-	@SuppressWarnings("deprecation")
-	public static java.sql.Date dateFromCalendar(Calendar c){
-		int year = c.get(1) -1900;
-		int month = c.get(2);
-		int day = c.get(5);
-
-		return new java.sql.Date(year, month, day);
-	}
-
-	@SuppressWarnings("deprecation")
-	public static java.sql.Date dateFromString(String s) throws ParseException{
-		SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-		java.util.Date date;
-		date = sdf.parse(s);
-		return new java.sql.Date(date.getYear(), date.getMonth(), date.getDate());
-	}
 }

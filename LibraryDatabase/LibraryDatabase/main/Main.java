@@ -472,6 +472,9 @@ public class Main extends JFrame implements ActionListener{
 			String[] input = {"Call Number", "Copy Number"};
 			memory = createInputPopup(input, "Return a book", memory);
 
+			if(memory == null)
+				return;
+			
 			callNumber = memory[0];
 			copyNumber = memory[1];
 			
@@ -488,17 +491,8 @@ public class Main extends JFrame implements ActionListener{
 
 		if(result != null)
 			makeErrorAlert(result);
-		
-		// TODO: check if borrower has outstanding fine, change afterwards
-		// TODO: check if there is hold request for book
-		// TODO: update all tuples
-
-		// TODO: 	
-		/*
-		 * Place a hold request for a book that is out. When the item is returned, the system sends an email
-		 * to the borrower and informs the library clerk to keep the book out of the shelves.
-		 */
-
+		else
+			makeSuccessAlert("Book was successfully returned.");
 	}
 
 	/*
@@ -639,7 +633,7 @@ public class Main extends JFrame implements ActionListener{
 				// update unpaid fine tuples
 				try {
 					String output = "";
-					String booksOut = TransactionManager.hasBooksOut(sinOrStNo);
+					String booksOut = TransactionHelper.hasBooksOut(sinOrStNo);
 					if (!booksOut.isEmpty()) {
 						// borrower has pending fines
 						output += "Items Borrowed and still Out:\n" + booksOut;
@@ -649,7 +643,7 @@ public class Main extends JFrame implements ActionListener{
 						// borrower has pending fines
 						output += "Outstanding Fines:\n" + fines;
 					}
-					String holdRequests = TransactionManager.hasHoldRequests(sinOrStNo);
+					String holdRequests = TransactionHelper.hasHoldRequests(sinOrStNo);
 					if (!holdRequests.isEmpty()) {
 						// borrower has pending fines
 						output += "Hold Requests:\n" + holdRequests;
