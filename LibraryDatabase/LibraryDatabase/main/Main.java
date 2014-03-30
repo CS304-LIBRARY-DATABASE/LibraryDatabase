@@ -484,8 +484,11 @@ public class Main extends JFrame implements ActionListener{
 
 		}
 		
-		TransactionManager.returnItem(callNumber, copyNumber);
+		String result = TransactionManager.returnItem(callNumber, copyNumber);
 
+		if(result != null)
+			makeErrorAlert(result);
+		
 		// TODO: check if borrower has outstanding fine, change afterwards
 		// TODO: check if there is hold request for book
 		// TODO: update all tuples

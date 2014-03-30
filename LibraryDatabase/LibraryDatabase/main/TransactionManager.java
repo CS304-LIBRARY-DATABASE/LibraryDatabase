@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 
 public class TransactionManager {
 
@@ -279,6 +281,7 @@ public class TransactionManager {
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
 		String result = null;
+		Connection con = DbConnection.getJDBCConnection();
 
 		try {
 			checkIfBookExists(callNumber, copyNumber);
@@ -288,29 +291,55 @@ public class TransactionManager {
 		}
 
 		String bid = "";
+		Date inDate;
+
 		Statement  stmt;
 		ResultSet  rs;
 		try {
-			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT bid"
+			rs = executeQuery("SELECT bid, inDate"
 					+ " FROM Borrowing"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " AND copyNo = '" + copyNumber + "'", stmt);
 
-			if (rs.next()) 
-				bid = rs.getString(1);
-			
+			bid = rs.getString(1);
+			inDate = rs.getDate(2);
 
 			rs.close();
 			stmt.close();
 
-
-			return result;
 		}catch (Exception e){
 			return "Could not find borrower who is taking out this book.";
 		}
+
+		Date today = dateFromCalendar(Calendar.getInstance());
+		
+		if(inDate.before(today)){
+			JOptionPane.showMessageDialog(null, "Assessing fine for late return.", "Overdue book", JOptionPane.INFORMATION_MESSAGE);
+			
+			
+			try {
+				PreparedStatement ps = con.prepareStatement("INSERT INTO Fine VALUES (fid_sequence.nextval,?,?,?,?)");
+				
+				//ps.setString(1, x);
+				
+				
+			} catch (SQLException e) {
+				e.printStackTrace();
+				return "Unable to insert fine tuple.";
+			}
+
+
+
+		}
+		
+		
+		
+		
+		
+		
+		return result;
 	}
 
 
