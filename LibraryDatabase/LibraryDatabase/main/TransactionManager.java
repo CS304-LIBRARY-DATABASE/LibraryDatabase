@@ -627,16 +627,24 @@ public class TransactionManager {
 			Statement  stmt = con.createStatement();
 
 			ResultSet rs = executeQuery("select callnumber, isbn, title, mainauthor, publisher, year, "
-					+ "NumIn = (select count(*) from "
-					+ "BookCopy bc where b.callNumber = bc.callNumber and status = 'in'), "
-					+ "NumOut = (select count(*) from "
-					+ "BookCopy bcO where b.callNumber = bcO.callNumber and status = 'out') "
+					+ "(select count(*) from "
+							+ "BookCopy bc where b.callNumber = bc.callNumber and status = 'in') as NumberIn, "
+					+ "(select count(*) from "
+							+ "BookCopy bcO where b.callNumber = bcO.callNumber and status = 'out') as NumberOut "
 					+ "from Book b "
 					+ "where title = '" + title + "'", stmt);
+			
+			String result = "| callNumber | isbn | title | mainauthor | publisher | year | NumberIn | NumberOut |\n";
 
-			String result = "";
 			while (rs.next()) {
-				String callNumber = rs.getString(1);
+				result += "| " + rs.getString(1).trim() + " | ";
+				result += rs.getString(2) + " | ";
+				result += rs.getString(3) + " | ";
+				result += rs.getString(4) + " | ";
+				result += rs.getString(5) + " | ";
+				result += rs.getInt(6) + " | ";
+				result += rs.getInt(7) + " | ";
+				result += rs.getInt(8) + " |\n";
 			}
 
 			rs.close();
@@ -650,15 +658,76 @@ public class TransactionManager {
 	}
 
 
-	public static String searchByAuthor(String key) throws TransactionException {
-		// TODO Auto-generated method stub
-		return null;
+	public static String searchByAuthor(String author) throws TransactionException {
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			Statement  stmt = con.createStatement();
+			
+			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor, b.publisher, b.year, "
+					+ "(select count(*) from "
+							+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
+					+ "(select count(*) from "
+							+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
+					+ "from Book b, HasAuthor ha "
+					+ "where (b.callNumber = ha.callNumber and ha.name = '" + author + "') or "
+							+ "b.mainAuthor = '" + author + "'", stmt);
+			
+			String result = "| callNumber | isbn | title | mainauthor | publisher | year | NumberIn | NumberOut |\n";
+			while (rs.next()) {
+				result += "| " + rs.getString(1).trim() + " | ";
+				result += rs.getString(2) + " | ";
+				result += rs.getString(3) + " | ";
+				result += rs.getString(4) + " | ";
+				result += rs.getString(5) + " | ";
+				result += rs.getInt(6) + " | ";
+				result += rs.getInt(7) + " | ";
+				result += rs.getInt(8) + " |\n";
+			}
+			
+			rs.close();
+			stmt.close();
+			return result;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
 	}
 
 
-	public static String searchBySubject(String key) throws TransactionException {
-		// TODO Auto-generated method stub
-		return null;
+	public static String searchBySubject(String subject) throws TransactionException {
+		Connection con = DbConnection.getJDBCConnection();
+		try {
+			Statement  stmt = con.createStatement();
+			
+			ResultSet rs = executeQuery("select distinct b.callnumber, b.isbn, b.title, b.mainauthor, b.publisher, b.year, "
+					+ "(select count(*) from "
+							+ "BookCopy bc where b.callNumber = bc.callNumber and bc.status = 'in') as NumberIn, "
+					+ "(select count(*) from "
+							+ "BookCopy bcO where b.callNumber = bcO.callNumber and bcO.status = 'out') as NumberOut "
+					+ "from Book b, HasSubject hs "
+					+ "where b.callNumber = hs.callNumber and hs.subject = '" + subject + "'", stmt);
+			
+			String result = "| callNumber | isbn | title | mainauthor | publisher | year | NumberIn | NumberOut |\n";
+			while (rs.next()) {
+				result += "| " + rs.getString(1).trim() + " | ";
+				result += rs.getString(2) + " | ";
+				result += rs.getString(3) + " | ";
+				result += rs.getString(4) + " | ";
+				result += rs.getString(5) + " | ";
+				result += rs.getInt(6) + " | ";
+				result += rs.getInt(7) + " | ";
+				result += rs.getInt(8) + " |\n";
+			}
+			
+			rs.close();
+			stmt.close();
+			return result;
+			
+		} catch (SQLException e) {
+			System.out.println("checkFine Error: " + e.getMessage());
+			throw new TransactionException("Error: " + e.getMessage());
+		}
 	}
 
 	public static String getDisplayString (ResultSet rs) throws SQLException, TransactionException{
