@@ -580,11 +580,12 @@ public class Main extends JFrame implements ActionListener{
 				try {
 					String result = TransactionHelper.searchBy(searchBy, search.trim());
 					writeToOutputBox(result);
-					break;
+					
 				} catch (TransactionException e) {
 					makeErrorAlert(e.getMessage());
 					e.printStackTrace();
 				}
+				break;
 			}
 		}
 	}
