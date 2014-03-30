@@ -43,7 +43,7 @@ create table Book
    title varchar(30) not null,
    mainAuthor varchar(40) not null,
    publisher varchar(40) null,
-   year int);
+   year int null);
 
 create table HasAuthor
    (callNumber char(20) not null,
@@ -60,7 +60,7 @@ create table HasSubject
 create table BookCopy
    (callNumber char(20) not null,
    copyNo char(4) not null,
-   status varchar(7) null,
+   status varchar(7) not null,
    primary key(callNumber, copyNo),
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 

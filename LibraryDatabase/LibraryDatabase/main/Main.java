@@ -731,7 +731,77 @@ public class Main extends JFrame implements ActionListener{
 		//BookCopy (callNumber, copyNo, status)
 		//HasAuthor (callNumber, name)
 		//HasSubject (callNumber, subject)
+		
+		JRadioButton newBook = new JRadioButton("Add New Book");
+		JRadioButton newCopy = new JRadioButton("Add New Copy to Existing Book");
+		ButtonGroup bg = new ButtonGroup();
+		bg.add(newBook);
+		bg.add(newCopy);
 
+		JPanel p = new JPanel(new SpringLayout());
+		p.add(newBook);
+		p.add(newCopy);
+
+		//Lay out the panel.
+		SpringUtilities.makeCompactGrid(p,
+				2, 1,        //rows, cols
+				6, 6,        //initX, initY
+				6, 6);       //xPad, yPad
+
+		final JOptionPane window = new JOptionPane();
+
+		while(true) {
+			int result = window.showOptionDialog(null, p, "", JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+			if(result != 0)
+				return;
+
+			String[] searchKey = new String[1];
+			if (newBook.isSelected()) {
+				addNewBook();
+			} else if (newCopy.isSelected()) {
+				addNewCopy();
+			} else {
+				continue;
+			}
+			break;
+		}
+
+		
+	}
+
+	private void addNewCopy() {
+		String callNumber;
+	
+		String[] properties = {"Call Number: "};
+		String [] memory = null;
+	
+		while (true) {
+			memory = createInputPopup(properties, "Add new book", memory);
+	
+			if (memory == null) {
+				return;
+			}
+			callNumber = memory[0];
+	
+			if (VerifyAttributes.verifyCallNumber(callNumber) != null) {
+				makeErrorAlert(VerifyAttributes.verifyCallNumber(callNumber));
+			} else {
+				// Add Copy to the database
+				try {
+					TransactionManager.addNewBookCopy(callNumber);
+					makeSuccessAlert("Copy successfully added");
+				} catch (TransactionException e) {
+					makeSuccessAlert(e.getMessage() + "\nCopy was not added");
+					e.printStackTrace();
+				}
+				break;
+			}
+		}
+	}
+
+	private void addNewBook() {
 		String callNumber;
 		String isbn;
 		String title;
@@ -774,8 +844,9 @@ public class Main extends JFrame implements ActionListener{
 			} else {
 				// Add book to the database
 				try {
-					TransactionHelper.addBook(memory);
-					makeSuccessAlert("Book successfully added");
+					if (TransactionHelper.addBook(memory)) {
+						makeSuccessAlert("Book successfully added");
+					}
 				} catch (TransactionException e) {
 					makeSuccessAlert("Book was not successfully added");
 					e.printStackTrace();
@@ -842,7 +913,11 @@ public class Main extends JFrame implements ActionListener{
 
 		try {
 			String result = TransactionManager.popularBooks(year, n);
-			writeToOutputBox(result);
+			if (result.isEmpty()) {
+				makeSuccessAlert("No items were borrowed in " + year);
+			} else {
+				writeToOutputBox(result);
+			}
 		} catch (TransactionException e) {
 			makeErrorAlert("Problem encountered, transaction aborted");
 		}
@@ -893,6 +968,15 @@ public class Main extends JFrame implements ActionListener{
 		}
 
 		return input;
+	}
+	
+	public static int createInfoAlert(String title, String message) {
+		final JOptionPane window = new JOptionPane();
+
+		int result = window.showOptionDialog(null, message, title, JOptionPane.OK_CANCEL_OPTION,
+				JOptionPane.QUESTION_MESSAGE, null, null, null);
+
+		return result;
 	}
 
 	/**
