@@ -560,7 +560,8 @@ public class TransactionManager {
 
 	public static void addNewBookCopy(String callNumber) throws TransactionException {
 		callNumber = callNumber.trim();
-
+		String copyNo;
+		
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
 		try {
@@ -576,7 +577,7 @@ public class TransactionManager {
 			if (rs.next()) {
 				existingCopyNum = rs.getString(1);
 				int num = Integer.parseInt(existingCopyNum.trim().substring(1)) + 1;
-				String copyNo = "C" + num;
+				copyNo = "C" + num;
 
 				rs.close();
 				stmt.close();
@@ -593,8 +594,14 @@ public class TransactionManager {
 						+ "with callNumber: " + callNumber);
 			}
 		} catch (SQLException e) {
-			System.out.println("addBorrower Error: " + e.getMessage());
+			System.out.println("addBook Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
+		}
+		
+		try{
+			setBookOnHold(callNumber, copyNo);
+		} catch(Exception e){
+			//do nothing
 		}
 	}
 
@@ -665,7 +672,7 @@ public class TransactionManager {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT DISTINCT callNumber, bid, name, emailAddress, outDate, inDate"
+			rs = executeQuery("SELECT DISTINCT callNumber, copyNo, bid, name, emailAddress, outDate, inDate as DueDate"
 					+ " FROM Borrowing NATURAL JOIN BookCopy NATURAL JOIN Borrower"
 					+ " WHERE status = 'out'"
 					+ " AND inDate < SYSDATE"

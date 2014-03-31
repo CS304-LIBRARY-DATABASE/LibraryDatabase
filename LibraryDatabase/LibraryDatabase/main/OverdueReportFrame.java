@@ -160,7 +160,7 @@ public class OverdueReportFrame extends JFrame {
 			JOptionPane.showMessageDialog(null, "Email was sent", "Success", JOptionPane.INFORMATION_MESSAGE);
 			frame.setVisible(false);
 		} catch (TransactionException e) {
-			JOptionPane.showMessageDialog(null, "Email was unable to be sent", "Error", JOptionPane.WARNING_MESSAGE);
+			JOptionPane.showMessageDialog(null, "Email was unable to be sent, make sure to have at least one recipient", "Error", JOptionPane.WARNING_MESSAGE);
 			e.printStackTrace();
 		} finally { 
 			send.setEnabled(true);

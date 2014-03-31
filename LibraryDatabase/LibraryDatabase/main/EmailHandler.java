@@ -14,15 +14,11 @@ public class EmailHandler {
 
 		String USER_NAME = "locallibrary304";  // GMail user name (just the part before "@gmail.com")
 		String PASSWORD = "cs304lib"; // GMail password
-		String RECIPIENT = "scott-mastro@hotmail.com";
-
-		//TODO: full functionality
 
 		String from = USER_NAME;
 		String pass = PASSWORD;
-		String[] to = { RECIPIENT }; // list of recipient email addresses
 
-		sendFromGMail(from, pass, to, subject, body);
+		sendFromGMail(from, pass, recipients, subject, body);
 	}
 
 	private static void sendFromGMail(String from, String pass, String[] to, String subject, String body)
