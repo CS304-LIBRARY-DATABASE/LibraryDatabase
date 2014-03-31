@@ -191,7 +191,6 @@ public class TransactionManager {
 	public static String checkoutBook(String callNumber, String bid, String copyNo, String type) throws TransactionException {
 		PreparedStatement ps = null;
 		Connection con = DbConnection.getJDBCConnection();
-		String result = "| callNumber | copyNo | inDate |\n";
 		try {
 			ps = con.prepareStatement("Update BookCopy set status = 'out'"
 					+ " where callNumber = '" + callNumber + "'");
@@ -219,17 +218,17 @@ public class TransactionManager {
 			ps.setDate(5, TransactionHelper.dateFromCalendar(inDate));
 
 			executeUpdate(ps, con);
-
-			result += "| " + callNumber + " | ";
-			result += copyNo + " | ";
-			result +=  TransactionHelper.dateFromCalendar(inDate) + " |\n";
-
+			
+			String result = "------------------------------------"
+					+ "------------------------------------\n";
+			result += "callNumber: " + callNumber + "\n";
+			result += "copyNo:     " + copyNo + "\n";
+			result += "DueDate:    " + TransactionHelper.dateFromCalendar(inDate) + "\n";
+			return result;
 		} catch (SQLException e) {
 			System.out.println("addBorrower Error: " + e.getMessage());
 			throw new TransactionException("Error: " + e.getMessage());
 		}
-
-		return result;
 	}
 
 	/*
@@ -549,18 +548,26 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			Statement  stmt = con.createStatement();
-
 			ResultSet rs = executeQuery("select callnumber, copyNo, outDate, inDate, "
-					+ "fid, amount, (select amount "
-					+ "from Borrower natural join Borrowing natural join Fine "
-					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null) as Total "
+					+ "fid, amount "
 					+ "from Borrower natural join Borrowing natural join Fine "
 					+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
-
+			
 			String result = TransactionHelper.getDisplayString(rs);
-
 			rs.close();
 			stmt.close();
+			
+			if (!result.isEmpty()) {
+				// get total fine amount
+				stmt = con.createStatement();
+				rs = executeQuery("select sum(amount) as FinesTotal "
+						+ "from Borrower natural join Borrowing natural join Fine "
+						+ "where sinOrStNo = '" + sinOrStNo + "' and paidDate is null", stmt);
+				
+				result += TransactionHelper.getDisplayString(rs);
+				rs.close();
+				stmt.close();
+			}
 			return result;
 
 		} catch (SQLException e) {
@@ -637,7 +644,7 @@ public class TransactionManager {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT DISTINCT callNumber, outDate, inDate," + subjectFilter[0]
+			rs = executeQuery("SELECT DISTINCT callNumber, outDate, inDate as DueDate," + subjectFilter[0]
 					+ " CASE WHEN inDate < SYSDATE THEN '***yes***'"
 					+      " WHEN inDate >= SYSDATE THEN 'no'"
 					+      " END AS Overdue"
@@ -727,12 +734,12 @@ public class TransactionManager {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT callNumber, title, mainAuthor, year, COUNT(callNumber) AS count" 
+			rs = executeQuery("select * from (SELECT callNumber, title, mainAuthor, year, COUNT(callNumber) AS count" 
 					+ " FROM Borrowing NATURAL JOIN Book" 
-					+ " WHERE ROWNUM <= " + n
-					+ " AND (EXTRACT(year FROM indate) = " + year + " OR EXTRACT(year FROM outdate) = " + year + ")"
+					+ " Where (EXTRACT(year FROM indate) = " + year + " OR EXTRACT(year FROM outdate) = " + year + ")"
 					+ " GROUP BY callNumber, title, mainAuthor, year"
-					+ " ORDER BY count DESC"
+					+ " ORDER BY count DESC)"
+					+ " WHERE ROWNUM <= " + n
 					, stmt);
 
 			result = TransactionHelper.getDisplayString(rs);

@@ -8,22 +8,21 @@ drop table HoldRequest;
 drop table Borrowing CASCADE CONSTRAINTS;
 drop table Fine;
 
+drop sequence bid_sequence;
+drop sequence hid_sequence;
+drop sequence fid_sequence;
+drop sequence borid_sequence;
+
+CREATE SEQUENCE bid_sequence MINVALUE 0 START WITH 0 INCREMENT BY 1 CACHE 10;
+CREATE SEQUENCE hid_sequence MINVALUE 0 START WITH 0 INCREMENT BY 1 CACHE 10;
+CREATE SEQUENCE borid_sequence MINVALUE 0 START WITH 0 INCREMENT BY 1 CACHE 10;
+CREATE SEQUENCE fid_sequence MINVALUE 0 START WITH 0 INCREMENT BY 1 CACHE 10;
+
 create table BorrowerType
    (type varchar(20) not null,
    bookTimeLimit varchar(20) not null,
    primary key (type));
    
-insert into BorrowerType values('borrower', '2');
-insert into BorrowerType values('faculty', '12');
-insert into BorrowerType values('staff', '6');
-insert into BorrowerType values('public', '2');
- 
-CREATE SEQUENCE bid_sequence
-MINVALUE 1
-START WITH 1
-INCREMENT BY 1
-CACHE 10
-
 create table Borrower 
    (bid int not null,
    password char(16) not null, 
@@ -64,12 +63,6 @@ create table BookCopy
    primary key(callNumber, copyNo),
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
 
-CREATE SEQUENCE hid_sequence
-MINVALUE 1
-START WITH 1
-INCREMENT BY 1
-CACHE 10
-
 create table HoldRequest
    (hid int not null primary key,
    bid int not null,
@@ -77,30 +70,17 @@ create table HoldRequest
    issuedDate date not null,
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber) references Book(callNumber) ON DELETE CASCADE);
-            
-                
-CREATE SEQUENCE borid_sequence
-MINVALUE 1
-START WITH 1
-INCREMENT BY 1
-CACHE 10
          
 create table Borrowing
    (borid int not null,
    bid int not null,
    callNumber char(20) not null,
    copyNo char(4) not null,
-   outDate date null not null,
-   inDate date null not null,
+   outDate date not null,
+   inDate date not null,
    primary key (borid),
    foreign key (bid) references Borrower(bid) ON DELETE CASCADE,
    foreign key (callNumber, copyNo) references BookCopy(callNumber, copyNo) ON DELETE CASCADE);
-   
-CREATE SEQUENCE fid_sequence
-MINVALUE 1
-START WITH 1
-INCREMENT BY 1
-CACHE 10
                        
 create table Fine
    (fid int not null primary key,
@@ -110,3 +90,4 @@ create table Fine
    borid int not null unique,
    foreign key (borid) references Borrowing(borid) ON DELETE CASCADE);
 
+commit;

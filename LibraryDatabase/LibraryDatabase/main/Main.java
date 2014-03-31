@@ -707,8 +707,14 @@ public class Main extends JFrame implements ActionListener{
 					String fines = TransactionManager.hasFines(sinOrStNo);
 					if (!fines.isEmpty()) {
 						writeToOutputBox(fines);
-						TransactionHelper.payFine(sinOrStNo);
-						makeSuccessAlert("Fines successfully payed");
+						String totalFine = fines.trim().split("TOTALFINE: ")[1];
+						
+						int result = Main.createInfoAlert("", "You owe $" + totalFine +
+								" in fines. Pay fines?");
+						if (result == 0) {
+							TransactionHelper.payFine(sinOrStNo);
+							makeSuccessAlert("Fines successfully payed");
+						}
 					} else {
 						makeSuccessAlert("Borrower with sinOrStNo " + sinOrStNo + " "
 								+ "has no outstanding fines");
@@ -894,7 +900,7 @@ public class Main extends JFrame implements ActionListener{
 		String[] memory = null;
 
 		while(true){
-			String[] response = {"Year", "# of Results"};
+			String[] response = {"Year", "Maximum Number of Results"};
 			memory = createInputPopup(response, "Find popular items", memory);
 
 			if(memory == null)

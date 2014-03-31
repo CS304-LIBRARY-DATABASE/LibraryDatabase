@@ -71,10 +71,9 @@ public class TransactionHelper {
 				return;
 			}
 		}
-
 		// output result
 		if (result.isEmpty()) {
-			Main.writeToOutputBox("None of the requested books are available");
+			Main.makeErrorAlert("None of the requested books are available");
 		} else { 
 			Main.writeToOutputBox(result);
 		}
@@ -298,7 +297,6 @@ public class TransactionHelper {
 			}
 			result = result.trim() + "\n";
 		}
-
 		return result;
 	}
 
