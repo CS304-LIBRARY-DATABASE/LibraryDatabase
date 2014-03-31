@@ -745,6 +745,7 @@ public class Main extends JFrame implements ActionListener{
 	 * Adds a new book or new copy of an existing book to the library. The librarian provides the
 	 * information for the new book, and the system adds it to the library.
 	 */
+	@SuppressWarnings({ "static-access", "unused" })
 	private void addBook() {
 		//Book (callNumber, isbn, title, mainAuthor, publisher, year)
 		//BookCopy (callNumber, copyNo, status)
@@ -820,6 +821,7 @@ public class Main extends JFrame implements ActionListener{
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void addNewBook() {
 		String callNumber;
 		String isbn;
@@ -989,6 +991,7 @@ public class Main extends JFrame implements ActionListener{
 		return input;
 	}
 	
+	@SuppressWarnings("static-access")
 	public static int createInfoAlert(String title, String message) {
 		final JOptionPane window = new JOptionPane();
 
