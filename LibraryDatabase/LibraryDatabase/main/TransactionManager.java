@@ -732,7 +732,7 @@ public class TransactionManager {
 			bid = spl[0];
 		} catch (TransactionException e) {
 			e.printStackTrace();
-			result = "Could not find borrower with sinOrStNo " + sinOrStNo;
+			result = e.getMessage();
 			return result;
 		}
 		try {

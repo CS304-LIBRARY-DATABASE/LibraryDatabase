@@ -50,5 +50,6 @@ Demo / Test Plan:
      Verify that Borrower w/ sinOrstNo 123 has fine. and '1 1 1111', 'C1' is 'on-hold'
   2. Return '1 1 1111', 'C2'
      Verify that  '1 1 1111', 'C2' is 'in'
-  3. 
+  3. Checkout 789, '1 1 1111'
+  
 */
