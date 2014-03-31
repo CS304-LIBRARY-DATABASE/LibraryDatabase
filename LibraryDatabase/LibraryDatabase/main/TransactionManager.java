@@ -339,38 +339,9 @@ public class TransactionManager {
 				stmt.close();
 				setBookIn(callNumber, copyNumber);
 			} else {
-				Integer numOnHold;
-				Integer numHoldReqests;
-				rs.close();
-				stmt.close();
-				stmt = con.createStatement();
-				rs = executeQuery("SELECT count(*) "
-						+ " FROM BookCopy"
-						+ " WHERE callNumber = '" + callNumber + "'"
-						+ " and status = 'on-hold'", stmt);
-				if(rs.next()) {
-					numOnHold = rs.getInt(1);
-				} else {
-					throw new TransactionException();
-				}
-				
-				rs.close();
-				stmt.close();
-				stmt = con.createStatement();
-				rs = executeQuery("SELECT count(*) "
-						+ " FROM HoldRequest"
-						+ " WHERE callNumber = '" + callNumber + "'", stmt);
-				if(rs.next()) {
-					numHoldReqests = rs.getInt(1);
-				} else {
-					throw new TransactionException();
-				}
-				rs.close();
-				stmt.close();
-				if (numHoldReqests > numOnHold) {
+				if (TransactionHelper.isMoreHoldRequestsThenCopiesOnHold(callNumber)) {
 					// this copy must go on hold
 					setBookOnHold(callNumber, copyNumber);
-					
 				} else {
 					// we can set this copy to 'in' and not worry about hold requests
 					setBookIn(callNumber, copyNumber);

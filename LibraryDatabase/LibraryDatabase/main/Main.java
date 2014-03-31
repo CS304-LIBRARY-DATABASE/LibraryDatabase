@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -442,7 +443,19 @@ public class Main extends JFrame implements ActionListener{
 				}
 				if (valid) {
 					// checkout books
-					TransactionHelper.checkout(memory, sinOrStNo);
+					try {
+						String result = TransactionHelper.checkout(memory, sinOrStNo);
+						// output result
+						if (result.isEmpty()) {
+							makeErrorAlert("None of the requested books are available");
+						} else {
+							makeSuccessAlert("Checked out book(s) successfully");
+							Main.writeToOutputBox(result);
+						}
+					} catch (TransactionException | SQLException e) {
+						makeErrorAlert(e.getMessage());
+						e.printStackTrace();
+					}
 					break;
 				}
 			}

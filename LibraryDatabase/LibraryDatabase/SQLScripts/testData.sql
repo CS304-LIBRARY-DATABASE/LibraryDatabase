@@ -42,3 +42,13 @@ insert into Borrowing values(borid_sequence.nextval, 3, '2 2 1995', 'C2', to_dat
 insert into Borrowing values(borid_sequence.nextval, 3, '3 3 1995', 'C3', to_date('2014/03/21','yyyy/mm/dd'), to_date('2014/04/11','yyyy/mm/dd'));
 
 commit;
+
+
+/*
+Demo / Test Plan:
+  1. Return '1 1 1111', 'C1'
+     Verify that Borrower w/ sinOrstNo 123 has fine. and '1 1 1111', 'C1' is 'on-hold'
+  2. Return '1 1 1111', 'C2'
+     Verify that  '1 1 1111', 'C2' is 'in'
+  3. 
+*/

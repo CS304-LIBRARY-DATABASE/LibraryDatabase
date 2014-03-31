@@ -15,104 +15,99 @@ import java.util.ArrayList;
 
 public class TransactionHelper {
 
-	public static void checkout(String [] properties, String sinOrStNo) {
-		String type = null;
-		String bid = null;
-		try {
-			// check if borrower is valid
-			String bidType = TransactionManager.verifyBorrower(sinOrStNo);
-			String [] spl = bidType.split(",");
-			type = spl[1];
-			bid = spl[0];
-		} catch (TransactionException e) {
-			Main.makeErrorAlert(e.getMessage());
-			e.printStackTrace();
-			return;
-		}
-		String callNumbers = "\n";
+	public static String checkout(String [] properties, String sinOrStNo) throws TransactionException, SQLException {
+		// check if borrower is valid
+		String bidType = TransactionManager.verifyBorrower(sinOrStNo);
+		String [] spl = bidType.split(",");
+		String type = spl[1];
+		String bid = spl[0];
+		
+		Connection con = DbConnection.getJDBCConnection();
 		
 		String result = "";
 		for (int i = 1; i < properties.length; i++) {
 			String callNumber = properties[i].trim();
-			String copyNo;
-			try {
-				copyNo = checkOnHold(callNumber, bid);
-
-				if(copyNo != null) {
+			
+			String [] onHold = checkOnHold(callNumber, bid);
+			
+			if(onHold != null) {
+				// the borrower has hold requested this item
+				String copyNo = onHold[0];
+				String hid = onHold[1];
+				
+				if (isMoreHoldRequestsThenCopiesOnHold(callNumber)) {
+					// if this borrower has the earliest hold request, the item can be checkout
 					Statement  stmt;
 					ResultSet  rs;
-					Connection con = DbConnection.getJDBCConnection();
+					
 					stmt = con.createStatement();
 
-					rs = TransactionManager.executeQuery("SELECT hid, bid"
+					rs = TransactionManager.executeQuery("SELECT bid"
 							+ " FROM HoldRequest"
 							+ " WHERE callNumber = '" + callNumber + "'"
-							+ " ORDER BY issuedDate", stmt);
+							+ " ORDER BY issuedDate ASC", stmt);
 
-					String hid = "";
 					if(rs.next()) {
-						String firstHoldRequestBid = rs.getString(2);
+						String firstHoldRequestBid = rs.getString(1);
 						if (firstHoldRequestBid.equals(bid)) {
-							
-						}
-						
-						hid = rs.getString(1);
-						
-						PreparedStatement ps = con.prepareStatement("DELETE FROM HoldRequest WHERE hid = '" + hid + "'");
-						TransactionManager.executeUpdate(ps, con);
-
-						result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
-						callNumbers += callNumber + "\n";
-					}
-				}
-				
-				
-				copyNo = checkAvailability(callNumber);
-				if (copyNo != null) {
-					// this book is available, create a borrowing record in db
-					result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
-					callNumbers += callNumber + "\n";
-				}
-				else {
-					copyNo = checkOnHold(callNumber, bid);
-
-					if(copyNo != null){
-
-						Statement  stmt;
-						ResultSet  rs;
-						Connection con = DbConnection.getJDBCConnection();
-						stmt = con.createStatement();
-
-						rs = TransactionManager.executeQuery("SELECT hid"
-								+ " FROM HoldRequest NATURAL JOIN Borrower"
-								+ " WHERE callNumber = '" + callNumber + "'"
-								+ " ORDER BY issuedDate", stmt);
-
-						String hid = "";
-						if(rs.next()){
-							hid = rs.getString(1);
-							
+							// this borrower made the first request. checkout item
 							PreparedStatement ps = con.prepareStatement("DELETE FROM HoldRequest WHERE hid = '" + hid + "'");
 							TransactionManager.executeUpdate(ps, con);
 
 							result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
-							callNumbers += callNumber + "\n";
 						}
 					}
+				} else {
+					// we can checkout
+					PreparedStatement ps = con.prepareStatement("DELETE FROM HoldRequest WHERE hid = '" + hid + "'");
+					TransactionManager.executeUpdate(ps, con);
+					
+					result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
 				}
-			} catch (Exception e) {
-				Main.makeErrorAlert(e.getMessage());
-				e.printStackTrace();
-				return;
+			} else {
+				// the borrower has not hold requested this item
+				String copyNo = checkAvailability(callNumber);
+				if (copyNo != null) {
+					// this book is available, create a borrowing record in db
+					result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
+				}
 			}
 		}
-		// output result
-		if (result.isEmpty()) {
-			Main.makeErrorAlert("None of the requested books are available");
+		return result;
+	}
+	
+	public static boolean isMoreHoldRequestsThenCopiesOnHold(String callNumber) throws TransactionException, SQLException {
+		Statement  stmt;
+		ResultSet  rs;
+		Connection con = DbConnection.getJDBCConnection();
+		
+		Integer numOnHold;
+		Integer numHoldReqests;
+		stmt = con.createStatement();
+		rs = TransactionManager.executeQuery("SELECT count(*) "
+				+ " FROM BookCopy"
+				+ " WHERE callNumber = '" + callNumber + "'"
+				+ " and status = 'on-hold'", stmt);
+		if(rs.next()) {
+			numOnHold = rs.getInt(1);
 		} else {
-			Main.makeSuccessAlert("Checked out books with callnumbers" + callNumbers + "Successfully");
-			Main.writeToOutputBox(result);
+			numOnHold = 0;
 		}
+		
+		rs.close();
+		stmt.close();
+		stmt = con.createStatement();
+		rs = TransactionManager.executeQuery("SELECT count(*) "
+				+ " FROM HoldRequest"
+				+ " WHERE callNumber = '" + callNumber + "'", stmt);
+		if(rs.next()) {
+			numHoldReqests = rs.getInt(1);
+		} else {
+			numHoldReqests = 0;
+		}
+		rs.close();
+		stmt.close();
+		return numHoldReqests > numOnHold;
 	}
 
 	/**
@@ -144,26 +139,29 @@ public class TransactionHelper {
 		}
 	}
 
-	public static String checkOnHold(String callNumber, String bid) throws TransactionException {
+	public static String [] checkOnHold(String callNumber, String bid) throws TransactionException {
 		Statement  stmt;
 		ResultSet  rs;
-		String copyNo = null;
+		String [] result = null;
 		try {
 			Connection con = DbConnection.getJDBCConnection();
 
 			stmt = con.createStatement();
 
-			rs = TransactionManager.executeQuery("SELECT copyNo"
+			rs = TransactionManager.executeQuery("SELECT copyNo, hid"
 					+ " FROM BookCopy NATURAL JOIN holdRequest"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " AND status = 'on-hold'"
 					+ " AND bid = '" + bid + "'", stmt);
-			if(rs.next())
-				copyNo = rs.getString(1);
+			if(rs.next()) {
+				result = new String[2];
+				result[0] = rs.getString(1);
+				result[1] = rs.getString(2);
+			}
 
 			rs.close();
 			stmt.close();
-			return copyNo;
+			return result;
 
 		} catch (SQLException ex) {
 			throw new TransactionException("Error: " + ex.getMessage());
@@ -315,11 +313,11 @@ public class TransactionHelper {
 					result += rs.getString(i+1) + "\n";
 					break;
 				case Types.INTEGER:
-				case Types.NUMERIC:
 					result += rs.getInt(i+1) + "\n";
 					break;
 				case Types.FLOAT:
 				case Types.DOUBLE:
+				case Types.NUMERIC: // this works for numeric
 					result += rs.getDouble(i+1) + "\n";
 					break;
 				case Types.DATE:
