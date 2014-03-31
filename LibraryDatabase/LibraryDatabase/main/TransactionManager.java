@@ -193,7 +193,7 @@ public class TransactionManager {
 		Connection con = DbConnection.getJDBCConnection();
 		try {
 			ps = con.prepareStatement("Update BookCopy set status = 'out'"
-					+ " where callNumber = '" + callNumber + "'");
+					+ " where callNumber = '" + callNumber + "' and copyNo = '" + copyNo + "'");
 			executeUpdate(ps, con);
 
 			ps = con.prepareStatement("Insert into Borrowing values (borid_sequence.nextval,?,?,?,?,?)");
@@ -231,7 +231,7 @@ public class TransactionManager {
 		}
 	}
 
-	/*
+	/**
 	 * Processes a return. When an item is returned, the clerk records the
 	 * return by providing the item's catalogue number. The system determines
 	 * the borrower who had borrowed the item and records that the item is
@@ -247,33 +247,52 @@ public class TransactionManager {
 		//Borrowing(borid, bid, callNumber, copyNo, outDate, inDate)
 
 		Connection con = DbConnection.getJDBCConnection();
-
+		Statement  stmt;
+		ResultSet  rs;
 		try {
-			checkIfBookExists(callNumber, copyNumber);
+			checkIfBookExists(callNumber);
 		} catch (TransactionException e) {
+			e.printStackTrace();
+			return "Could not find book " + callNumber;
+		}
+		
+		try {			
+			stmt = con.createStatement();
+			rs = executeQuery("SELECT status"
+					+ " FROM BookCopy"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " and copyNo = '" + copyNumber + "'", stmt);
+			if(!rs.next()) {
+				return "Could not find book copy " + callNumber + " " + copyNumber;
+			} else {
+				String status = rs.getString(1);
+				if (!status.equals("out")) {
+					return "Could not return book " + callNumber + " " + copyNumber  + ".\n"
+							+ "The book is not registered as checked out";
+				}
+			}
+			rs.close();
+			stmt.close();
+		} catch (TransactionException | SQLException e) {
 			e.printStackTrace();
 			return "Could not find book " + callNumber + " " + copyNumber;
 		}
-
 		Date inDate;
 		int borid;
-
-		Statement  stmt;
-		ResultSet  rs;
 		try {
 			stmt = con.createStatement();
 
 			rs = executeQuery("SELECT inDate, borid"
 					+ " FROM Borrowing"
 					+ " WHERE callNumber = '" + callNumber + "'"
-					+ " AND copyNo = '" + copyNumber + "'", stmt);
+					+ " AND copyNo = '" + copyNumber + "'"
+					+ " order by outDate desc", stmt);
 
 			if(rs.next()){
 				inDate = rs.getDate(1);
 				borid = rs.getInt(2);
 			}
-			else throw new TransactionException();
-
+			else throw new TransactionException("Error, item returned with no Borrowing history");
 			rs.close();
 			stmt.close();
 
@@ -303,36 +322,85 @@ public class TransactionManager {
 				return "Unable to insert fine tuple.";
 			}
 		}
-
-		try {
-			PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'in'"
-					+ " WHERE callNumber = '" + callNumber + "'"
-					+ " AND copyNo = '" + copyNumber + "'");
-			
-			executeUpdate(ps, con);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			return "Unable to update status of book copy to 'in'.";
-		}
 		
-		/*
-		 * Hold request for a book that is out: When the item is returned, the system sends an email
-		 * to the borrower and informs the library clerk to keep the book out of the shelves.
-		 */
-
-		try {
+		// check if the item is on hold by
+		// checking how many hold requests for callnumber there are
+		// and checking how many items with callnumber are already on hold
+		try {			
 			stmt = con.createStatement();
+			rs = executeQuery("SELECT * "
+					+ " FROM BookCopy"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " and status = 'in'", stmt);
+			
+			if(rs.next()) {
+				// we can set this copy to 'in' and not worry about hold requests
+				rs.close();
+				stmt.close();
+				setBookIn(callNumber, copyNumber);
+			} else {
+				Integer numOnHold;
+				Integer numHoldReqests;
+				rs.close();
+				stmt.close();
+				stmt = con.createStatement();
+				rs = executeQuery("SELECT count(*) "
+						+ " FROM BookCopy"
+						+ " WHERE callNumber = '" + callNumber + "'"
+						+ " and status = 'on-hold'", stmt);
+				if(rs.next()) {
+					numOnHold = rs.getInt(1);
+				} else {
+					throw new TransactionException();
+				}
+				
+				rs.close();
+				stmt.close();
+				stmt = con.createStatement();
+				rs = executeQuery("SELECT count(*) "
+						+ " FROM HoldRequest"
+						+ " WHERE callNumber = '" + callNumber + "'", stmt);
+				if(rs.next()) {
+					numHoldReqests = rs.getInt(1);
+				} else {
+					throw new TransactionException();
+				}
+				rs.close();
+				stmt.close();
+				if (numHoldReqests > numOnHold) {
+					// this copy must go on hold
+					setBookOnHold(callNumber, copyNumber);
+					
+				} else {
+					// we can set this copy to 'in' and not worry about hold requests
+					setBookIn(callNumber, copyNumber);
+				}
+			}
+		} catch (TransactionException | SQLException e) {
+			e.printStackTrace();
+			return "Could not find book " + callNumber + " " + copyNumber;
+		}
+		return null;
+	}
 
-			rs = executeQuery("SELECT emailAddress"
+
+	/**
+	 * Hold request for a book that is out: When the item is returned, the system sends an email
+	 * to the borrower and informs the library clerk to keep the book out of the shelves.
+	 */
+	private static void setBookOnHold(String callNumber, String copyNumber) throws TransactionException{
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			Statement stmt = con.createStatement();
+
+			ResultSet rs = executeQuery("SELECT emailAddress"
 					+ " FROM HoldRequest NATURAL JOIN Borrower"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " ORDER BY issuedDate", stmt);
 
 			String[] emailList = new String[1];
-			if(rs.next()){
+			if(rs.next()) {
 				emailList[0] = rs.getString(1);
-				
 				
 				String emailSubject = "Library - Your book is on hold";
 				String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
@@ -343,30 +411,34 @@ public class TransactionManager {
 
 				JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
 
-				
-				try {
 					PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
 							+ " WHERE callNumber = '" + callNumber + "'"
 							+ " AND copyNo = '" + copyNumber + "'");
 					
 					executeUpdate(ps, con);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					return "Unable to update status of book copy to 'on-hold'.";
-				}
-			
 			}
-
 			rs.close();
 			stmt.close();
 						
-		}catch (Exception e){
-			e.printStackTrace();
-			return "Could not email borrowers with hold requests.";
+		} catch (SQLException e) {
+			throw new TransactionException(e.getMessage());
 		}
-		
-		return null;
+	}
+
+
+	private static void setBookIn(String callNumber, String copyNumber) throws TransactionException {
+		try {
+			Connection con = DbConnection.getJDBCConnection();
+			PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'in'"
+					+ " WHERE callNumber = '" + callNumber + "'"
+					+ " AND copyNo = '" + copyNumber + "'");
+			
+			executeUpdate(ps, con);
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new TransactionException(e.getMessage());
+		}
 	}
 
 
@@ -398,32 +470,35 @@ public class TransactionManager {
 	}
 
 	public static boolean checkIfBookExists(String callNumber, String copyNumber) throws TransactionException {
-		checkIfBookExists(callNumber);
-		Statement  stmt;
-		ResultSet  rs;
-		try {
-			Connection con = DbConnection.getJDBCConnection();
-			stmt = con.createStatement();
-
-			boolean result;
-
-			rs = executeQuery("SELECT * FROM BookCopy WHERE copyNo = '" + callNumber + "'", stmt);
-
-			if (rs.next()) {
-				result = true;
+		if (checkIfBookExists(callNumber)) {
+			// book exists, check if book copy exists
+			Statement  stmt;
+			ResultSet  rs;
+			try {
+				Connection con = DbConnection.getJDBCConnection();
+				stmt = con.createStatement();
+	
+				boolean result;
+	
+				rs = executeQuery("SELECT * FROM BookCopy WHERE copyNo = '" + copyNumber + "'"
+						+ " and callNumber = '" + callNumber + "'", stmt);
+	
+				if (rs.next()) {
+					result = true;
+				}
+				else {
+					result = false;
+				}
+				rs.close();
+				stmt.close();
+				return result;
+	
+			} catch (SQLException ex) {
+				throw new TransactionException("Error: " + ex.getMessage());
 			}
-			// no borrowers with bid found
-			else {
-				result = false;
-			}
-			rs.close();
-			stmt.close();
-			return result;
-
-		} catch (SQLException ex) {
-			throw new TransactionException("Error: " + ex.getMessage());
+		} else {
+			return false;
 		}
-
 	}
 
 

@@ -20,24 +20,25 @@ insert into HasSubject values ('1 1 1111', 'Database');
 insert into HasSubject values ('3 3 3333', 'Art');
 insert into HasSubject values ('3 3 3333', 'History');
 
-insert into BookCopy values ('1 1 1111', 'C1', 'in');
-insert into BookCopy values ('1 1 1111', 'C2', 'in');
-insert into BookCopy values ('2 2 2222', 'C1', 'in');
+insert into BookCopy values ('1 1 1111', 'C1', 'out');
+insert into BookCopy values ('1 1 1111', 'C2', 'out');
+
+insert into BookCopy values ('2 2 2222', 'C1', 'out');
 insert into BookCopy values ('2 2 2222', 'C2', 'out');
-insert into BookCopy values ('3 3 3333', 'C1', 'out');
-insert into BookCopy values ('3 3 3333', 'C2', 'out');
+
+insert into BookCopy values ('3 3 3333', 'C1', 'in');
+insert into BookCopy values ('3 3 3333', 'C2', 'in');
 insert into BookCopy values ('3 3 3333', 'C3', 'out');
 
-insert into HoldRequest values (hid_sequence.nextval, 1, '3 3 3333', sysdate);
-insert into HoldRequest values (hid_sequence.nextval, 2, '3 3 3333', sysdate);           
+insert into HoldRequest values (hid_sequence.nextval, 3, '1 1 1111', sysdate);
+insert into HoldRequest values (hid_sequence.nextval, 2, '2 2 2222', sysdate);           
            
-insert into Borrowing values(borid_sequence.nextval, 1, '2 2 2222', 'C2', to_date('2014/02/21','yyyy/mm/dd'), to_date('2014/03/11','yyyy/mm/dd'));
-insert into Borrowing values(borid_sequence.nextval, 1, '3 3 3333', 'C1', to_date('2014/02/21','yyyy/mm/dd'), to_date('2014/03/11','yyyy/mm/dd'));
-insert into Borrowing values(borid_sequence.nextval, 1, '3 3 3333', 'C3', to_date('2014/03/21','yyyy/mm/dd'), to_date('2014/04/11','yyyy/mm/dd'));
-insert into Borrowing values(borid_sequence.nextval, 3, '3 3 3333', 'C2', to_date('2014/02/21','yyyy/mm/dd'), to_date('2014/03/11','yyyy/mm/dd'));
+insert into Borrowing values(borid_sequence.nextval, 1, '1 1 1111', 'C1', to_date('2014/02/21','yyyy/mm/dd'), to_date('2014/03/11','yyyy/mm/dd'));
+insert into Borrowing values(borid_sequence.nextval, 2, '1 1 1111', 'C2', to_date('2014/03/21','yyyy/mm/dd'), to_date('2014/04/11','yyyy/mm/dd'));
 
-insert into Fine values (fid_sequence.nextval, 9, sysdate, null, 1);
-insert into Fine values (fid_sequence.nextval, 14, sysdate, null, 2);
-insert into Fine values (fid_sequence.nextval, 7, sysdate, null, 4);
+insert into Borrowing values(borid_sequence.nextval, 1, '2 2 2222', 'C1', to_date('2014/02/21','yyyy/mm/dd'), to_date('2014/03/11','yyyy/mm/dd'));
+insert into Borrowing values(borid_sequence.nextval, 3, '2 2 2222', 'C2', to_date('2014/03/21','yyyy/mm/dd'), to_date('2014/04/11','yyyy/mm/dd'));
+
+insert into Borrowing values(borid_sequence.nextval, 3, '3 3 3333', 'C3', to_date('2014/03/21','yyyy/mm/dd'), to_date('2014/04/11','yyyy/mm/dd'));
 
 commit;

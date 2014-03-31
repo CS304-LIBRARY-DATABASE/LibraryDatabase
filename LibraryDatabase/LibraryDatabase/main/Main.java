@@ -707,7 +707,7 @@ public class Main extends JFrame implements ActionListener{
 					String fines = TransactionManager.hasFines(sinOrStNo);
 					if (!fines.isEmpty()) {
 						writeToOutputBox(fines);
-						String totalFine = fines.trim().split("TOTALFINE: ")[1];
+						String totalFine = fines.trim().split("FINESTOTAL: ")[1];
 						
 						int result = Main.createInfoAlert("", "You owe $" + totalFine +
 								" in fines. Pay fines?");

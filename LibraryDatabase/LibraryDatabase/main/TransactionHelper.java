@@ -29,15 +29,49 @@ public class TransactionHelper {
 			e.printStackTrace();
 			return;
 		}
-
+		String callNumbers = "\n";
+		
 		String result = "";
 		for (int i = 1; i < properties.length; i++) {
 			String callNumber = properties[i].trim();
+			String copyNo;
 			try {
-				String copyNo = checkAvailability(callNumber);
+				copyNo = checkOnHold(callNumber, bid);
+
+				if(copyNo != null) {
+					Statement  stmt;
+					ResultSet  rs;
+					Connection con = DbConnection.getJDBCConnection();
+					stmt = con.createStatement();
+
+					rs = TransactionManager.executeQuery("SELECT hid, bid"
+							+ " FROM HoldRequest"
+							+ " WHERE callNumber = '" + callNumber + "'"
+							+ " ORDER BY issuedDate", stmt);
+
+					String hid = "";
+					if(rs.next()) {
+						String firstHoldRequestBid = rs.getString(2);
+						if (firstHoldRequestBid.equals(bid)) {
+							
+						}
+						
+						hid = rs.getString(1);
+						
+						PreparedStatement ps = con.prepareStatement("DELETE FROM HoldRequest WHERE hid = '" + hid + "'");
+						TransactionManager.executeUpdate(ps, con);
+
+						result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
+						callNumbers += callNumber + "\n";
+					}
+				}
+				
+				
+				copyNo = checkAvailability(callNumber);
 				if (copyNo != null) {
 					// this book is available, create a borrowing record in db
 					result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
+					callNumbers += callNumber + "\n";
 				}
 				else {
 					copyNo = checkOnHold(callNumber, bid);
@@ -62,6 +96,7 @@ public class TransactionHelper {
 							TransactionManager.executeUpdate(ps, con);
 
 							result += TransactionManager.checkoutBook(callNumber, bid, copyNo, type);
+							callNumbers += callNumber + "\n";
 						}
 					}
 				}
@@ -74,7 +109,8 @@ public class TransactionHelper {
 		// output result
 		if (result.isEmpty()) {
 			Main.makeErrorAlert("None of the requested books are available");
-		} else { 
+		} else {
+			Main.makeSuccessAlert("Checked out books with callnumbers" + callNumbers + "Successfully");
 			Main.writeToOutputBox(result);
 		}
 	}
@@ -279,11 +315,11 @@ public class TransactionHelper {
 					result += rs.getString(i+1) + "\n";
 					break;
 				case Types.INTEGER:
-				case Types.NUMERIC:
 					result += rs.getInt(i+1) + "\n";
 					break;
 				case Types.FLOAT:
 				case Types.DOUBLE:
+				case Types.NUMERIC:
 					result += rs.getDouble(i+1) + "\n";
 					break;
 				case Types.DATE:
