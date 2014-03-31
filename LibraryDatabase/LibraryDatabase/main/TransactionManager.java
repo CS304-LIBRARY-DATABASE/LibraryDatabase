@@ -371,25 +371,23 @@ public class TransactionManager {
 
 			String[] emailList = new String[1];
 			if(rs.next()) {
-				if (TransactionHelper.isMoreHoldRequestsThenCopiesOnHold(callNumber)) {
 				
-					emailList[0] = rs.getString(1);
+				emailList[0] = rs.getString(1);
+				
+				String emailSubject = "Library - Your book is on hold";
+				String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
+						" that you have placed a hold request on is now available. Please pick it up at your convenience."
+						+ "\n \n Thanks, \nLocal Library 304 Staff";
+				
+				EmailHandler.sendEmail(emailList, emailSubject, emailBody);
+
+				JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
+
+					PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
+							+ " WHERE callNumber = '" + callNumber + "'"
+							+ " AND copyNo = '" + copyNumber + "'");
 					
-					String emailSubject = "Library - Your book is on hold";
-					String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
-							" that you have placed a hold request on is now available. Please pick it up at your convenience."
-							+ "\n \n Thanks, \nLocal Library 304 Staff";
-					
-					EmailHandler.sendEmail(emailList, emailSubject, emailBody);
-	
-					JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
-	
-						PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
-								+ " WHERE callNumber = '" + callNumber + "'"
-								+ " AND copyNo = '" + copyNumber + "'");
-						
-						executeUpdate(ps, con);
-				}
+					executeUpdate(ps, con);
 			}
 			rs.close();
 			stmt.close();
@@ -573,7 +571,9 @@ public class TransactionManager {
 		}
 		
 		try{
-			setBookOnHold(callNumber, copyNo);
+			if (TransactionHelper.isMoreHoldRequestsThenCopiesOnHold(callNumber)) {
+				setBookOnHold(callNumber, copyNo);
+			}
 		} catch(Exception e){
 			//do nothing
 		}
