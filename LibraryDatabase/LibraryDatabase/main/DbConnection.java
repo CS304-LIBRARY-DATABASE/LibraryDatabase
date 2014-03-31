@@ -50,8 +50,8 @@ public class DbConnection implements ActionListener {
 	      
 	      
 	      //TODO: remove before demo
-	      usernameField.setText("ora_x7b8");
-	      passwordField.setText("a26747113");
+//	      usernameField.setText("ora_x7b8");
+//	      passwordField.setText("a26747113");
 
 
 	      JButton loginButton = new JButton("Log In");

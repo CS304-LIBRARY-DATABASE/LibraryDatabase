@@ -365,28 +365,31 @@ public class TransactionManager {
 			Statement stmt = con.createStatement();
 
 			ResultSet rs = executeQuery("SELECT emailAddress"
-					+ " FROM HoldRequest NATURAL JOIN Borrower"
+					+ " FROM HoldRequest"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " ORDER BY issuedDate", stmt);
 
 			String[] emailList = new String[1];
 			if(rs.next()) {
-				emailList[0] = rs.getString(1);
+				if (TransactionHelper.isMoreHoldRequestsThenCopiesOnHold(callNumber)) {
 				
-				String emailSubject = "Library - Your book is on hold";
-				String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
-						" that you have placed a hold request on is now available. Please pick it up at your convenience."
-						+ "\n \n Thanks, \nLocal Library 304 Staff";
-				
-				EmailHandler.sendEmail(emailList, emailSubject, emailBody);
-
-				JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
-
-					PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
-							+ " WHERE callNumber = '" + callNumber + "'"
-							+ " AND copyNo = '" + copyNumber + "'");
+					emailList[0] = rs.getString(1);
 					
-					executeUpdate(ps, con);
+					String emailSubject = "Library - Your book is on hold";
+					String emailBody = "Dear Borrower,\nThe book with call number " + callNumber + 
+							" that you have placed a hold request on is now available. Please pick it up at your convenience."
+							+ "\n \n Thanks, \nLocal Library 304 Staff";
+					
+					EmailHandler.sendEmail(emailList, emailSubject, emailBody);
+	
+					JOptionPane.showMessageDialog(null, "Hold request email has been sent to " + emailList[0] + ", please hold book.", "Hold book", JOptionPane.INFORMATION_MESSAGE);
+	
+						PreparedStatement ps = con.prepareStatement("UPDATE BookCopy SET status = 'on-hold'"
+								+ " WHERE callNumber = '" + callNumber + "'"
+								+ " AND copyNo = '" + copyNumber + "'");
+						
+						executeUpdate(ps, con);
+				}
 			}
 			rs.close();
 			stmt.close();
