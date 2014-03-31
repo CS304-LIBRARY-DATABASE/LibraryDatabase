@@ -365,7 +365,7 @@ public class TransactionManager {
 			Statement stmt = con.createStatement();
 
 			ResultSet rs = executeQuery("SELECT emailAddress"
-					+ " FROM HoldRequest"
+					+ " FROM HoldRequest NATURAL JOIN Borrower"
 					+ " WHERE callNumber = '" + callNumber + "'"
 					+ " ORDER BY issuedDate", stmt);
 
