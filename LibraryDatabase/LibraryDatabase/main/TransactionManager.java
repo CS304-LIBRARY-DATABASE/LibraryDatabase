@@ -719,7 +719,7 @@ public class TransactionManager {
 			Connection con = DbConnection.getJDBCConnection();
 			stmt = con.createStatement();
 
-			rs = executeQuery("SELECT DISTINCT callNumber, outDate, inDate as DueDate," + subjectFilter[0]
+			rs = executeQuery("SELECT DISTINCT callNumber, copyNo, outDate, inDate as DueDate," + subjectFilter[0]
 					+ " CASE WHEN inDate < SYSDATE THEN '***yes***'"
 					+      " WHEN inDate >= SYSDATE THEN 'no'"
 					+      " END AS Overdue"

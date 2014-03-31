@@ -315,11 +315,11 @@ public class TransactionHelper {
 					result += rs.getString(i+1) + "\n";
 					break;
 				case Types.INTEGER:
+				case Types.NUMERIC:
 					result += rs.getInt(i+1) + "\n";
 					break;
 				case Types.FLOAT:
 				case Types.DOUBLE:
-				case Types.NUMERIC:
 					result += rs.getDouble(i+1) + "\n";
 					break;
 				case Types.DATE:
